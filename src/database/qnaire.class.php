@@ -2634,7 +2634,7 @@ class qnaire extends \cenozo\database\record
       $db_address->international_region = $participant->international_region;
       $db_address->international_country_id = $participant->international_country_id;
       $db_address->timezone_offset = $participant->timezone_offset;
-      $db_address->daylight_saings = $participant->daylight_saings;
+      $db_address->daylight_savings = $participant->daylight_savings;
       $db_address->january = $participant->january;
       $db_address->february = $participant->february;
       $db_address->march = $participant->march;
