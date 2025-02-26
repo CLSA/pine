@@ -2621,11 +2621,33 @@ class qnaire extends \cenozo\database\record
         $db_address->rank = 1;
       }
 
+      $db_address->international = $participant->international;
       $db_address->address1 = $participant->address1;
       $db_address->address2 = $participant->address2;
       $db_address->city = $participant->city;
-      $db_address->region_id = $region_class_name::get_unique_record( 'name', $participant->region )->id;
+      if( $participant->region )
+      {
+        $db_region = $region_class_name::get_unique_record( 'name', $participant->region );
+        if( !is_null( $db_region ) ) $db_address->region_id = $db_region->id;
+      }
       $db_address->postcode = $participant->postcode;
+      $db_address->international_region = $participant->international_region;
+      $db_address->international_country_id = $participant->international_country_id;
+      $db_address->timezone_offset = $participant->timezone_offset;
+      $db_address->daylight_saings = $participant->daylight_saings;
+      $db_address->january = $participant->january;
+      $db_address->february = $participant->february;
+      $db_address->march = $participant->march;
+      $db_address->april = $participant->april;
+      $db_address->may = $participant->may;
+      $db_address->june = $participant->june;
+      $db_address->july = $participant->july;
+      $db_address->august = $participant->august;
+      $db_address->september = $participant->september;
+      $db_address->october = $participant->october;
+      $db_address->november = $participant->november;
+      $db_address->december = $participant->december;
+      $db_address->note = $participant->address_note;
       $db_address->save();
 
       // replace all eligible studies with the provided list
