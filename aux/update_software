@@ -45,6 +45,7 @@ if( 0 != $result ) exit( $result );
 $initial = new \cenozo\initial( true );
 $settings = $initial->get_settings();
 
+chdir( $SETTINGS['path']['CENOZO'] );
 $result = execute(
   sprintf(
     'aux/patch_database %s',
