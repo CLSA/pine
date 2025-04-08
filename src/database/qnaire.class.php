@@ -4530,15 +4530,18 @@ class qnaire extends \cenozo\database\record
             );
           }
 
-          $db_qnaire_participant_trigger = $qnaire_participant_trigger_class_name::get_unique_record(
-            ['qnaire_id', 'question_id', 'answer_value', 'column_name'],
-            [
-              $this->id,
-              $db_question->id,
-              $qnaire_participant_trigger->answer_value,
-              $qnaire_participant_trigger->column_name
-            ]
-          );
+          if( !is_null( $db_question ) )
+          {
+            $db_qnaire_participant_trigger = $qnaire_participant_trigger_class_name::get_unique_record(
+              ['qnaire_id', 'question_id', 'answer_value', 'column_name'],
+              [
+                $this->id,
+                $db_question->id,
+                $qnaire_participant_trigger->answer_value,
+                $qnaire_participant_trigger->column_name
+              ]
+            );
+          }
 
           if( is_null( $db_qnaire_participant_trigger ) )
           {
@@ -4671,15 +4674,18 @@ class qnaire extends \cenozo\database\record
               );
             }
 
-            $db_qnaire_collection_trigger = $qnaire_collection_trigger_class_name::get_unique_record(
-              ['qnaire_id', 'collection_id', 'question_id', 'answer_value'],
-              [
-                $this->id,
-                $db_collection->id,
-                $db_question->id,
-                $qnaire_collection_trigger->answer_value
-              ]
-            );
+            if( !is_null( $db_question ) )
+            {
+              $db_qnaire_collection_trigger = $qnaire_collection_trigger_class_name::get_unique_record(
+                ['qnaire_id', 'collection_id', 'question_id', 'answer_value'],
+                [
+                  $this->id,
+                  $db_collection->id,
+                  $db_question->id,
+                  $qnaire_collection_trigger->answer_value
+                ]
+              );
+            }
 
             if( is_null( $db_qnaire_collection_trigger ) )
             {
@@ -4814,15 +4820,18 @@ class qnaire extends \cenozo\database\record
               );
             }
 
-            $db_qnaire_consent_type_trigger = $qnaire_consent_type_trigger_class_name::get_unique_record(
-              ['qnaire_id', 'consent_type_id', 'question_id', 'answer_value'],
-              [
-                $this->id,
-                $db_consent_type->id,
-                $db_question->id,
-                $qnaire_consent_type_trigger->answer_value
-              ]
-            );
+            if( !is_null( $db_question ) )
+            {
+              $db_qnaire_consent_type_trigger = $qnaire_consent_type_trigger_class_name::get_unique_record(
+                ['qnaire_id', 'consent_type_id', 'question_id', 'answer_value'],
+                [
+                  $this->id,
+                  $db_consent_type->id,
+                  $db_question->id,
+                  $qnaire_consent_type_trigger->answer_value
+                ]
+              );
+            }
 
             if( is_null( $db_qnaire_consent_type_trigger ) )
             {
@@ -4957,15 +4966,18 @@ class qnaire extends \cenozo\database\record
               );
             }
 
-            $db_qnaire_event_type_trigger = $qnaire_event_type_trigger_class_name::get_unique_record(
-              ['qnaire_id', 'event_type_id', 'question_id', 'answer_value'],
-              [
-                $this->id,
-                $db_event_type->id,
-                $db_question->id,
-                $qnaire_event_type_trigger->answer_value
-              ]
-            );
+            if( !is_null( $db_question ) )
+            {
+              $db_qnaire_event_type_trigger = $qnaire_event_type_trigger_class_name::get_unique_record(
+                ['qnaire_id', 'event_type_id', 'question_id', 'answer_value'],
+                [
+                  $this->id,
+                  $db_event_type->id,
+                  $db_question->id,
+                  $qnaire_event_type_trigger->answer_value
+                ]
+              );
+            }
 
             if( is_null( $db_qnaire_event_type_trigger ) )
             {
@@ -5098,15 +5110,18 @@ class qnaire extends \cenozo\database\record
               );
             }
 
-            $db_qnaire_aconsent_type_trigger = $qnaire_aconsent_type_trigger_class_name::get_unique_record(
-              ['qnaire_id', 'alternate_consent_type_id', 'question_id', 'answer_value'],
-              [
-                $this->id,
-                $db_aconsent_type->id,
-                $db_question->id,
-                $qnaire_aconsent_type_trigger->answer_value
-              ]
-            );
+            if( !is_null( $db_question ) )
+            {
+              $db_qnaire_aconsent_type_trigger = $qnaire_aconsent_type_trigger_class_name::get_unique_record(
+                ['qnaire_id', 'alternate_consent_type_id', 'question_id', 'answer_value'],
+                [
+                  $this->id,
+                  $db_aconsent_type->id,
+                  $db_question->id,
+                  $qnaire_aconsent_type_trigger->answer_value
+                ]
+              );
+            }
 
             if( is_null( $db_qnaire_aconsent_type_trigger ) )
             {
@@ -5241,15 +5256,18 @@ class qnaire extends \cenozo\database\record
               );
             }
 
-            $db_qnaire_proxy_type_trigger = $qnaire_proxy_type_trigger_class_name::get_unique_record(
-              ['qnaire_id', 'proxy_type_id', 'question_id', 'answer_value'],
-              [
-                $this->id,
-                is_null( $db_proxy_type ) ? NULL : $db_proxy_type->id,
-                $db_question->id,
-                $qnaire_proxy_type_trigger->answer_value
-              ]
-            );
+            if( !is_null( $db_question) )
+            {
+              $db_qnaire_proxy_type_trigger = $qnaire_proxy_type_trigger_class_name::get_unique_record(
+                ['qnaire_id', 'proxy_type_id', 'question_id', 'answer_value'],
+                [
+                  $this->id,
+                  is_null( $db_proxy_type ) ? NULL : $db_proxy_type->id,
+                  $db_question->id,
+                  $qnaire_proxy_type_trigger->answer_value
+                ]
+              );
+            }
 
             if( is_null( $db_qnaire_proxy_type_trigger ) )
             {
@@ -5389,10 +5407,13 @@ class qnaire extends \cenozo\database\record
               );
             }
 
-            $db_qnaire_equipment_type_trigger = $qnaire_equipment_type_trigger_class_name::get_unique_record(
-              ['qnaire_id', 'equipment_type_id', 'question_id'],
-              [$this->id, $db_equipment_type->id, $db_question->id]
-            );
+            if( !is_null( $db_question ) )
+            {
+              $db_qnaire_equipment_type_trigger = $qnaire_equipment_type_trigger_class_name::get_unique_record(
+                ['qnaire_id', 'equipment_type_id', 'question_id'],
+                [$this->id, $db_equipment_type->id, $db_question->id]
+              );
+            }
 
             if( is_null( $db_qnaire_equipment_type_trigger ) )
             {
