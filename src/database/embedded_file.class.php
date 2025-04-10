@@ -25,7 +25,7 @@ class embedded_file extends \cenozo\database\record
     {
       return sprintf(
         '<img %ssrc="data:%s;base64,%s" />',
-        !is_null( $width ) ? sprintf( 'style="width: %s;" ', $width ) : '',
+        !is_null( $width ) ? sprintf( 'style="width: %spx;" ', $width ) : '',
         $this->mime_type,
         $this->data
       );

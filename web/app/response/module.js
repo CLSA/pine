@@ -297,7 +297,7 @@ cenozoApp.defineModule({
                       } else if (["audio", "signature"].includes(question.type)) {
                         // if the audio/signature answer is valid then setup the question.answer property
                         if (!angular.isString(question.answer) && null != question.file) {
-                          question.answer = $sce.trustAsHtml(
+                          question.answer = (
                             "audio" == question.type ? (
                               '<audio controls class="full-width" style="height: 40px;" src="' +
                               question.file + '"></audio>'
@@ -305,6 +305,9 @@ cenozoApp.defineModule({
                               '<img class="full-width" src="' + question.file + '"></img>'
                             )
                           );
+
+                          if (angular.isString(question.answer))
+                            question.answer = $sce.trustAsHtml(question.answer);
                         }
                       }
                     })

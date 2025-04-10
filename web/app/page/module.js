@@ -936,9 +936,11 @@ cenozoApp.defineModule({
             },
 
             getModulePrompt: function () {
-              return null != this.parentModel.viewModel.record.module_prompts
-                ? $sce.trustAsHtml(this.parentModel.viewModel.record.module_prompts[this.currentLanguage])
-                : "";
+              if (null == this.parentModel.viewModel.record.module_prompts) return "";
+
+              let value = this.parentModel.viewModel.record.module_prompts[this.currentLanguage];
+              if (angular.isString(value)) value = $sce.trustAsHtml(value);
+              return value;
             },
 
             getModulePopup: function () {
@@ -948,15 +950,18 @@ cenozoApp.defineModule({
             },
 
             getPagePrompt: function () {
-              return null != this.parentModel.viewModel.record.prompts &&
-                null != this.parentModel.viewModel.record.popups
-                ? $sce.trustAsHtml(
-                    (
-                      this.parentModel.viewModel.record.popups[this.currentLanguage] ?
-                        '<b class="invert">ⓘ</b> ' : ""
-                    ) + this.parentModel.viewModel.record.prompts[this.currentLanguage]
-                  )
-                : "";
+              if (
+                null == this.parentModel.viewModel.record.prompts ||
+                null == this.parentModel.viewModel.record.popups
+              ) return "";
+
+              let value = (
+                this.parentModel.viewModel.record.popups[this.currentLanguage] ?
+                '<b class="invert">ⓘ</b> ' :
+                ""
+              ) + this.parentModel.viewModel.record.prompts[this.currentLanguage];
+              if (angular.isString(value)) value = $sce.trustAsHtml(value);
+              return value;
             },
 
             getPagePopup: function () {
@@ -966,39 +971,43 @@ cenozoApp.defineModule({
             },
 
             getQuestionPrompt: function (question) {
-              return $sce.trustAsHtml(
-                (
-                  question.popups[this.currentLanguage] ||
-                  question.minimum ||
-                  question.maximum ?
-                  '<b class="invert">ⓘ</b> ' : ""
-                ) +
-                question.prompts[this.currentLanguage]
-              );
+              let value = (
+                question.popups[this.currentLanguage] ||
+                question.minimum ||
+                question.maximum ?
+                '<b class="invert">ⓘ</b> ' : ""
+              ) +
+              question.prompts[this.currentLanguage];
+
+              if (angular.isString(value)) value = $sce.trustAsHtml(value);
+              return value;
             },
 
             getOptionPrompt: function (question, option) {
-              return $sce.trustAsHtml(
+              let value = (
                 this.getHotKey(question, option.id) +
-                  // only non-multiple answer options get a checkmark icon
-                  (option.multiple_answers
-                    ? ""
-                    : ' <i class="glyphicon ' +
-                      (angular.isDefined(question.answer) && question.answer.optionList[option.id].selected
-                        ? "glyphicon-check"
-                        : "glyphicon-unchecked") +
-                      '"></i> ') +
-                  (option.popups[this.currentLanguage] ||
-                  null != option.minimum ||
-                  null != option.maximum
-                    ? '<b class="invert">ⓘ</b> '
-                    : "") +
-                  option.prompts[this.currentLanguage] +
-                  // only multiple answers get a plus icon
-                  (option.multiple_answers
-                    ? '<i class="glyphicon glyphicon-plus"></i>'
-                    : "")
+                // only non-multiple answer options get a checkmark icon
+                (
+                  (option.multiple_answers ? "" : ' <i class="glyphicon ') +
+                  (
+                    angular.isDefined(question.answer) && question.answer.optionList[option.id].selected ?
+                    "glyphicon-check" :
+                    "glyphicon-unchecked"
+                  ) +
+                  '"></i> '
+                ) +
+                (
+                  option.popups[this.currentLanguage] || null != option.minimum || null != option.maximum ?
+                  '<b class="invert">ⓘ</b> ' :
+                  ""
+                ) +
+                option.prompts[this.currentLanguage] +
+                // only multiple answers get a plus icon
+                (option.multiple_answers ? '<i class="glyphicon glyphicon-plus"></i>' : "")
               );
+
+              if (angular.isString(value)) value = $sce.trustAsHtml(value);
+              return value;
             },
 
             getPopupText: function (questionOrOption) {

@@ -691,7 +691,8 @@ cenozo.directive("cnQnaireNavigator", [
 /* ############################################################################################## */
 cenozo.service("CnTranslationHelper", [
   "$filter",
-  function ($filter) {
+  "$sce",
+  function ($filter, $sce) {
     return {
       translate: function (address, language) {
         var addressParts = address.split(".");
@@ -938,10 +939,8 @@ cenozo.service("CnTranslationHelper", [
           if (null == code) {
             code = part;
           } else {
-            list[code] =
-              null == part.match(/<[a-zA-Z]+>/)
-                ? $filter("cnNewlines")(part)
-                : part;
+            list[code] = null == part.match(/<[a-zA-Z]+>/) ? $filter("cnNewlines")(part) : part;
+            if (angular.isString(list[code])) list[code] = $sce.trustAsHtml(list[code]);
             code = null;
           }
           return list;
