@@ -988,13 +988,15 @@ cenozoApp.defineModule({
                 this.getHotKey(question, option.id) +
                 // only non-multiple answer options get a checkmark icon
                 (
-                  (option.multiple_answers ? "" : ' <i class="glyphicon ') +
-                  (
-                    angular.isDefined(question.answer) && question.answer.optionList[option.id].selected ?
-                    "glyphicon-check" :
-                    "glyphicon-unchecked"
-                  ) +
-                  '"></i> '
+                  option.multiple_answers ? "" : (
+                    ' <i class="glyphicon ' +
+                    (
+                      angular.isDefined(question.answer) && question.answer.optionList[option.id].selected ?
+                      "glyphicon-check" :
+                      "glyphicon-unchecked"
+                    ) +
+                    '"></i> '
+                  )
                 ) +
                 (
                   option.popups[this.currentLanguage] || null != option.minimum || null != option.maximum ?
@@ -1003,7 +1005,7 @@ cenozoApp.defineModule({
                 ) +
                 option.prompts[this.currentLanguage] +
                 // only multiple answers get a plus icon
-                (option.multiple_answers ? '<i class="glyphicon glyphicon-plus"></i>' : "")
+                (option.multiple_answers ? ' <i class="glyphicon glyphicon-plus"></i>' : "")
               );
 
               if (angular.isString(value)) value = $sce.trustAsHtml(value);
