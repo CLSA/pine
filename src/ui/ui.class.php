@@ -22,64 +22,74 @@ class ui extends \cenozo\ui\ui
     $session = lib::create( 'business\session' );
 
     // If we're loading the qnaire run then show a special interface if we're logged in as the qnaire user
-    $db_response = $session->get_response();
-    if( !is_null( $db_response ) )
+    try
     {
-      $setting_manager = lib::create( 'business\setting_manager' );
-      $qnaire_username = $setting_manager->get_setting( 'utility', 'qnaire_username' );
-      $db_user = $session->get_user();
-
-      if( !is_null( $db_user ) && $qnaire_username == $db_user->name )
+      $db_response = $session->get_response();
+      if( !is_null( $db_response ) )
       {
-        // we'll need the main interface libraries
-        $this->add_base_libs();
-        $this->add_interface_libs();
+        $setting_manager = lib::create( 'business\setting_manager' );
+        $qnaire_username = $setting_manager->get_setting( 'utility', 'qnaire_username' );
+        $db_user = $session->get_user();
 
-        // get the incompatible description, if there is one
-        $qnaire_description_class_name = lib::get_class_name( 'database\qnaire_description' );
-        $db_language = $db_response->get_language();
-        $db_qnaire_description = $qnaire_description_class_name::get_unique_record(
-          ['qnaire_id', 'language_id', 'type'],
-          [$db_response->get_respondent()->qnaire_id, $db_language->id, 'incompatible']
-        );
-        $incompatible_title = 'fr' == $db_language->code ? 'Navigateur incompatible' : 'Incompatible Browser';
-        if( is_null( $db_qnaire_description ) || is_null( $db_qnaire_description->value ) )
+        if( !is_null( $db_user ) && $qnaire_username == $db_user->name )
         {
-          $incompatible_message = 'fr' == $db_language->code ? (
-            'Votre navigateur Web n’est pas compatible avec cette application.  '.
-            'Veuillez essayer de changer d’appareil, d’ordinateur ou de navigateur.'
-          ) : (
-            'Your web browser is not compatible with this application.  '.
-            'Please try using a different device, computer, or browser.'
+          // we'll need the main interface libraries
+          $this->add_base_libs();
+          $this->add_interface_libs();
+
+          // get the incompatible description, if there is one
+          $qnaire_description_class_name = lib::get_class_name( 'database\qnaire_description' );
+          $db_language = $db_response->get_language();
+          $db_qnaire_description = $qnaire_description_class_name::get_unique_record(
+            ['qnaire_id', 'language_id', 'type'],
+            [$db_response->get_respondent()->qnaire_id, $db_language->id, 'incompatible']
           );
-        }
-        else
-        {
-          $incompatible_message = addslashes( preg_replace( '/[\r\n]/', '', $db_qnaire_description->value ) );
-        }
+          $incompatible_title = 'fr' == $db_language->code ? 'Navigateur incompatible' : 'Incompatible Browser';
+          if( is_null( $db_qnaire_description ) || is_null( $db_qnaire_description->value ) )
+          {
+            $incompatible_message = 'fr' == $db_language->code ? (
+              'Votre navigateur Web n’est pas compatible avec cette application.  '.
+              'Veuillez essayer de changer d’appareil, d’ordinateur ou de navigateur.'
+            ) : (
+              'Your web browser is not compatible with this application.  '.
+              'Please try using a different device, computer, or browser.'
+            );
+          }
+          else
+          {
+            $incompatible_message = addslashes( preg_replace( '/[\r\n]/', '', $db_qnaire_description->value ) );
+          }
 
-        // build the interface
-        ob_start();
-        include( dirname( __FILE__ ).'/qnaire_interface.php' );
-        return ob_get_clean();
+          // build the interface
+          ob_start();
+          include( dirname( __FILE__ ).'/qnaire_interface.php' );
+          return ob_get_clean();
+        }
+      }
+      else if( !$session->get_qnaire_has_stages() && array_key_exists( 'REDIRECT_URL', $_SERVER ) )
+      {
+        $self_path = substr( $_SERVER['PHP_SELF'], 0, strrpos( $_SERVER['PHP_SELF'], '/' ) + 1 );
+        $path = str_replace( $self_path, '', $_SERVER['REDIRECT_URL'] );
+        if( preg_match( '#\brun\b#', $path, $matches ) )
+        {
+          $error = [
+            'title' => 'Page Not Found / Page non trouvée',
+            'message' =>
+              'The address you have provided is either not valid or the '.
+              'server was unable to find the page you are looking for.'.
+              "<br/>\n".
+              'L’adresse fournie n’est pas valide ou le serveur n’a pas pu trouver la page que vous recherchez.'
+          ];
+          return parent::get_error_interface( $error );
+        }
       }
     }
-    else if( !$session->get_qnaire_has_stages() && array_key_exists( 'REDIRECT_URL', $_SERVER ) )
+    catch( \cenozo\exception\notice $e )
     {
-      $self_path = substr( $_SERVER['PHP_SELF'], 0, strrpos( $_SERVER['PHP_SELF'], '/' ) + 1 );
-      $path = str_replace( $self_path, '', $_SERVER['REDIRECT_URL'] );
-      if( preg_match( '#\brun\b#', $path, $matches ) )
-      {
-        $error = array(
-          'title' => 'Page Not Found / Page non trouvée',
-          'message' =>
-            'The address you have provided is either not valid or the '.
-            'server was unable to find the page you are looking for.'.
-            "<br/>\n".
-            'L’adresse fournie n’est pas valide ou le serveur n’a pas pu trouver la page que vous recherchez.'
-        );
-        return parent::get_error_interface( $error );
-      }
+      return parent::get_error_interface([
+        'title' => 'Please Note',
+        'message' => $e->get_raw_message()
+      ]);
     }
 
     // if none of the above applies then load the regular interface

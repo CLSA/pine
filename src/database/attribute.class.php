@@ -20,7 +20,7 @@ class attribute extends \cenozo\database\record
    * @param database\participant $db_participant
    * @return string
    */
-  public function get_participant_value( $db_participant )
+  public function get_participant_value( $db_participant, &$warning = NULL )
   {
     $data_manager = lib::create( 'business\data_manager' );
     $session = lib::create( 'business\session' );
@@ -30,7 +30,6 @@ class attribute extends \cenozo\database\record
     {
       if( !is_null( $db_participant ) )
       {
-        $warning = NULL;
         $value = $data_manager->get_participant_value( $db_participant, $this->code, $warning );
         if( !is_null( $warning ) ) $session->attribute_error_list[$this->name] = $warning;
       }

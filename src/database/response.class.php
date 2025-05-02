@@ -691,26 +691,12 @@ class response extends \cenozo\database\has_rank
       {
         // collect errors found while trying to get the participant's attribute value
         $value = NULL;
-        try
-        {
-          // participant-specific attributes will always be NULL for anonymous respondents
-          $value = $db_attribute->get_participant_value( $db_participant );
-        }
-        catch( \cenozo\exception\argument $e )
-        {
-          log::warning( sprintf(
-            'Error while getting attribute value for %s, questionnaire "%s", attribute "%s".%s%s',
-            is_null( $db_participant ) ?
-              sprintf( 'anonymous respondent %d', $db_respondent->id ) :
-              sprintf( 'participant %s', $db_participant->uid ),
-            $db_qnaire->name,
-            $db_attribute->name,
-            "\n",
-            $e->get_raw_message()
-          ) );
-          $session->attribute_error_list[$db_attribute->name] = $e->get_raw_message();
-          $success = false;
-        }
+
+        // participant-specific attributes will always be NULL for anonymous respondents
+        $warning = NULL;
+        $value = $db_attribute->get_participant_value( $db_participant, $warning );
+
+        if( !is_null( $warning ) ) $success = false;
 
         if( is_null( $db_response_attribute ) )
         {
