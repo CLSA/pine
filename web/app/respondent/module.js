@@ -450,6 +450,28 @@ cenozoApp.defineModule({
     });
 
     /* ############################################################################################## */
+    cenozo.providers.directive("cnRespondentReassign", [
+      "CnRespondentReassignFactory",
+      "CnSession",
+      "$state",
+      function (CnRespondentReassignFactory, CnSession, $state) {
+        return {
+          templateUrl: module.getFileUrl("reassign.tpl.html"),
+          restrict: "E",
+          scope: { model: "=?" },
+          controller: async function ($scope) {
+            if (angular.isUndefined($scope.model))
+              $scope.model = CnRespondentReassignFactory.instance();
+
+            CnSession.setBreadcrumbTrail([
+              { title: "Reassign Respondents" },
+            ]);
+          },
+        };
+      },
+    ]);
+
+    /* ############################################################################################## */
     cenozo.providers.directive("cnRespondentRun", [
       "CnRespondentModelFactory",
       function (CnRespondentModelFactory) {
@@ -503,6 +525,179 @@ cenozoApp.defineModule({
         return {
           instance: function (parentModel) {
             return new object(parentModel);
+          },
+        };
+      },
+    ]);
+
+    /* ############################################################################################## */
+    cenozo.providers.factory("CnRespondentReassignFactory", [
+      "CnRespondentModelFactory",
+      "CnHttpFactory",
+      "CnModalMessageFactory",
+      "CnModalConfirmFactory",
+      function (
+        CnRespondentModelFactory,
+        CnHttpFactory,
+        CnModalMessageFactory,
+        CnModalConfirmFactory,
+      ) {
+        var object = function () {
+          angular.extend(this, {
+            parentModel: CnRespondentModelFactory.root,
+            isLoading: false,
+            qnaireList: [],
+            qnaireId: null,
+            typeahead1: {
+              respodentId: null,
+              formattedValue: "",
+              isLoading: false,
+            },
+            typeahead2: {
+              respodentId: null,
+              formattedValue: "",
+              isLoading: false,
+            },
+
+            getTypeaheadValues: async function(n, viewValue) {
+              const typeahead = 1 == n ? this.typeahead1 : this.typeahead2;
+              const otherTypeahead = 1 == n ? this.typeahead2 : this.typeahead1;
+
+              let retVal = undefined;
+              try {
+                typeahead.isLoading = true;
+
+                const where = [
+                  { bracket: true, open: true },
+                  { column: "uid", operator: "like", value: "%" + viewValue + "%" },
+                  { column: "token", operator: "like", value: "%" + viewValue + "%", or: true },
+                  { bracket: true, open: false },
+                ];
+
+                if (otherTypeahead.respondentId) {
+                  where.push({ column: "respondent.id", operator: "!=", value: otherTypeahead.respondentId });
+                }
+
+                const response = await CnHttpFactory.instance({
+                  path: ["qnaire", this.qnaireId, "respondent"].join("/"),
+                  data: {
+                    select: {
+                      column: [
+                        "id",
+                        { column: "CONCAT(uid, ' (', token, ')')", alias: "value", table_prefix: false },
+                      ],
+                    },
+                    modifier: { where: where, order: "uid" },
+                  },
+                }).get();
+                retVal = angular.copy(response.data);
+              } finally {
+                typeahead.isLoading = false;
+              }
+
+              return retVal;
+            },
+
+            onSelectTypeahead: function(n, item, model, label) {
+              const typeahead = 1 == n ? this.typeahead1 : this.typeahead2;
+
+              typeahead.respondentId = model;
+              typeahead.formattedValue = label;
+            },
+
+            resetTypeaheads: function() {
+              this.typeahead1.resondentId = null;
+              this.typeahead1.formattedValue = "";
+              this.typeahead1.isLoading = false;
+              this.typeahead2.resondentId = null;
+              this.typeahead2.formattedValue = "";
+              this.typeahead2.isLoading = false;
+            },
+
+            proceed: async function() {
+              const qnaireName = this.qnaireList.findByProperty("value", this.qnaireId).name;
+
+              // confirm before proceeding
+              const check = await CnModalConfirmFactory.instance({
+                title: "Please Confirm",
+                message:
+                  '<div class="vertical-spacer">' +
+                    'Are you sure you wish to swap the following responses for the <strong>"' +
+                    qnaireName + '"</strong> questionnaire?\n' +
+                  "</div>" +
+                  "<ul>" + 
+                    "<li>" + this.typeahead1.formattedValue + "</li>" +
+                    "<li>" + this.typeahead2.formattedValue + "</li>" +
+                  "</ul>",
+                html: true,
+              }).show();
+
+              if (check) {
+                try {
+                  object.isLoading = true;
+                  const response = await CnHttpFactory.instance({
+                    path: "qnaire?reassign=1",
+                    data: {
+                      qnaire_id: this.qnaireId,
+                      respondent_id_1: this.typeahead1.respondentId,
+                      respondent_id_2: this.typeahead2.respondentId,
+                    },
+                    onError: (error) => {
+                      if (409 == error.status) {
+                        CnModalMessageFactory.instance({
+                          title: "Reassignment Failed",
+                          message: JSON.parse(error.data),
+                          error: true,
+                        }).show();
+                      } else {
+                        CnModalMessageFactory.httpError(error);
+                      }
+                    },
+                  }).post();
+
+                  CnModalMessageFactory.instance({
+                    title: "Reassignment Complete",
+                    message:
+                      'Respondent "' + this.typeahead1.formattedValue +
+                      '" has been successfully swapped with "' + this.typeahead2.formattedValue + '".',
+                  }).show();
+                  this.resetTypeaheads();
+                } finally {
+                  object.isLoading = false;
+                }
+              }
+            },
+          });
+
+          async function init(object) {
+            try {
+              object.isLoading = true;
+
+              const response = await CnHttpFactory.instance({
+                path: 'qnaire',
+                data: {
+                  select: { column: ['id', 'name'] },
+                  modifier: { order: 'name' },
+                },
+              }).query();
+
+              object.qnaireList = response.data.reduce((list, item) => {
+                list.push({ value: item.id, name: item.name });
+                return list;
+              }, []);
+
+              if (null == object.qnaireId && 0 < object.qnaireList.length)
+                object.qnaireId = object.qnaireList[0].value;
+            } finally {
+              object.isLoading = false;
+            }
+          }
+
+          init(this);
+        };
+        return {
+          instance: function () {
+            return new object();
           },
         };
       },

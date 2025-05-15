@@ -6756,6 +6756,101 @@ class qnaire extends \cenozo\database\record
   }
 
   /**
+   * Swaps all responses between two respondents
+   */
+  public function reassign( $db_respondent1, $db_respondent2 )
+  {
+    // validate
+    if( $db_respondent1->qnaire_id != $this->id )
+    {
+      throw lib::create( 'exception\runtime',
+        sprintf(
+          'Respondent #1 (%s) does not belong to questionnaire "%s"',
+          $db_respondent1->get_participant()->uid,
+          $this->name
+        ),
+        __METHOD__
+      );
+    }
+
+    if( $db_respondent2->qnaire_id != $this->id )
+    {
+      throw lib::create( 'exception\runtime',
+        sprintf(
+          'Respondent #2 (%s) does not belong to questionnaire "%s"',
+          $db_respondent2->get_participant()->uid,
+          $this->name
+        ),
+        __METHOD__
+      );
+    }
+
+    if( $db_respondent1->id == $db_respondent2->id )
+    {
+      throw lib::create( 'exception\runtime', 'Respondent #1 and #2 are the same!', __METHOD__ );
+    }
+
+    // we're safe to proceed, start by swapping the respondent datetimes
+    $start_datetime1 = $db_respondent1->start_datetime;
+    $end_datetime1 = $db_respondent1->end_datetime;
+    $export_datetime1 = $db_respondent1->export_datetime;
+
+    $db_respondent1->start_datetime = $db_respondent2->start_datetime;
+    $db_respondent1->end_datetime = $db_respondent2->end_datetime;
+    $db_respondent1->export_datetime = $db_respondent2->export_datetime;
+    $db_respondent1->save();
+
+    $db_respondent2->start_datetime = $start_datetime1;
+    $db_respondent2->end_datetime = $end_datetime1;
+    $db_respondent2->export_datetime = $export_datetime1;
+    $db_respondent2->save();
+
+    // swap all response records
+    $response_list_1 = $db_respondent1->get_response_object_list();
+    $response_list_2 = $db_respondent2->get_response_object_list();
+    foreach( $response_list_1 as $db_response )
+    {
+      $db_response->respondent_id = $db_respondent2->id;
+      $db_response->rank = $db_response->rank + 1000000; // to avoid conflicts
+      $db_response->save();
+    }
+    foreach( $response_list_2 as $db_response )
+    {
+      $db_response->respondent_id = $db_respondent1->id;
+      $db_response->save();
+    }
+    foreach( $response_list_1 as $db_response )
+    {
+      $db_response->rank = $db_response->rank - 1000000; // put back the correct rank
+      $db_response->save();
+    }
+
+    // swap all respondent mail
+    $respondent_mail_list_1 = $db_respondent1->get_respondent_mail_object_list();
+    $respondent_mail_list_2 = $db_respondent2->get_respondent_mail_object_list();
+    foreach( $respondent_mail_list_1 as $db_respondent_mail )
+    {
+      $db_respondent_mail->respondent_id = $db_respondent2->id;
+      $db_respondent_mail->rank = $db_respondent_mail->rank + 1000000; // to avoid conflicts
+      $db_respondent_mail->save();
+    }
+    foreach( $respondent_mail_list_2 as $db_respondent_mail )
+    {
+      $db_respondent_mail->respondent_id = $db_respondent1->id;
+      $db_respondent_mail->save();
+    }
+    foreach( $respondent_mail_list_1 as $db_respondent_mail )
+    {
+      $db_respondent_mail->rank = $db_respondent_mail->rank - 1000000; // put back the correct rank
+      $db_respondent_mail->save();
+    }
+
+    // update the current response for both respondents
+    static::db()->execute( sprintf( 'CALL update_respondent_current_response(%d)', $db_respondent1->id ) );
+    static::db()->execute( sprintf( 'CALL update_respondent_current_response(%d)', $db_respondent2->id ) );
+  }
+
+  /**
    * Returns the directory that uploaded response data to this qnaire is written to
    */
   public function get_data_directory()

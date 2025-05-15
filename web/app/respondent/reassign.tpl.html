@@ -1,0 +1,95 @@
+<div class="utility-view rounded">
+  <div class="container-fluid bg-primary rounded-top">
+    <h4>
+      <div class="pull-right">
+        <i
+          class="glyphicon glyphicon-question-sign glyph-hover btn-primary btn-header"
+          ng-class="{'glyph-disabled':!model.parentModel.module.hasNotation()}"
+          ng-if="model.parentModel.isRole('administrator') || model.parentModel.module.hasNotation()"
+          uib-tooltip="Click to view documentation"
+          tooltip-placement="left"
+          ng-click="model.parentModel.showNotation(); $event.stopPropagation()"
+        ></i>
+      </div>
+      Reassign Respondents
+    </h4>
+  </div>
+  <form name="form" class="form-horizontal" novalidate><fieldset ng-disabled="model.isLoading">
+    <div class="form-body container-fluid">
+      <div class="container-fluid">
+        <div class="vertical-spacer">
+          This utility allows you to swap the responses between two respondents.
+          This is typically used when an interview was performed under the wrong respondent.
+          In order to proceed you must provide the questionnaire and two respondent records
+          (by participant UID or token) that already exist in the selected questionnaire.
+          The order of the respondents does not matter.
+          The start, end and export datetimes as well as all responses and email records will be swapped.
+        </div>
+        <div class="vertical-spacer text-warning">
+          PLEASE NOTE: The respondent token and attributes will not be swapped!
+          If you wish to update the attribute values you must do so after the reassignment is complete.
+        </div>
+      </div>
+      <hr />
+      <div class="form-body">
+        <div class="form-group">
+          <label for="qnaireId" class="control-label col-sm-3">Questionnaire</label>
+          <div class="col-sm-9">
+            <select
+              id="qnaireId"
+              class="form-control"
+              type="string"
+              ng-model="model.qnaireId"
+              ng-options="item.value as item.name for item in model.qnaireList"
+              ng-change="model.resetTypeaheads()"
+            ></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="respondent_id_1" class="control-label col-sm-3">Respondent #1</label>
+          <div class="col-sm-9">
+            <input
+              id="respondent_id_1"
+              class="form-control"
+              type="text"
+              ng-model="model.typeahead1.formattedValue"
+              uib-typeahead="item.id as item.value for item in model.getTypeaheadValues(1, $viewValue)"
+              typeahead-editable="false"
+              typeahead-on-select="model.onSelectTypeahead(1, $item, $model, $label)"
+              typeahead-min-length="1"
+              ng-class="{ 'loading-small': model.typeahead1.isLoading }"
+              placeholder="(type the first few letters of a respondent's token or UID)"
+              autocomplete="off"
+            ></input>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="respondent_id_2" class="control-label col-sm-3">Respondent #2</label>
+          <div class="col-sm-9">
+            <input
+              id="respondent_id_2"
+              class="form-control"
+              type="text"
+              ng-model="model.typeahead2.formattedValue"
+              uib-typeahead="item.id as item.value for item in model.getTypeaheadValues(2, $viewValue)"
+              typeahead-editable="false"
+              typeahead-on-select="model.onSelectTypeahead(2, $item, $model, $label)"
+              typeahead-min-length="1"
+              ng-class="{ 'loading-small': model.typeahead2.isLoading }"
+              placeholder="(type the first few letters of a respondent's token or UID)"
+              autocomplete="off"
+            ></input>
+          </div>
+        </div>
+      </div>
+    </div>
+  </fieldset></form>
+  <div class="form-footer text-right rounded-bottom bg-info">
+    <button
+      type="button"
+      class="btn btn-primary"
+      ng-disabled="!model.qnaireId || !model.typeahead1.respondentId || !model.typeahead2.respondentId"
+      ng-click="model.proceed()"
+    >Proceed</button>
+  </div>
+</div>

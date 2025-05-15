@@ -103,36 +103,36 @@ class ui extends \cenozo\ui\ui
   {
     parent::build_module_list();
 
-    $module = $this->get_module( 'qnaire' );
-    if( !is_null( $module ) )
+    $qnaire_module = $this->get_module( 'qnaire' );
+    if( !is_null( $qnaire_module ) )
     {
-      $module->add_child( 'respondent' );
-      $module->add_child( 'reminder' );
-      $module->add_child( 'qnaire_description' );
-      $module->add_child( 'module' );
-      $module->add_child( 'question' );
-      $module->add_child( 'attribute' );
-      $module->add_child( 'qnaire_consent_type_confirm' );
-      $module->add_child( 'qnaire_participant_trigger' );
-      $module->add_child( 'qnaire_collection_trigger' );
-      $module->add_child( 'qnaire_consent_type_trigger' );
-      $module->add_child( 'qnaire_event_type_trigger' );
-      $module->add_child( 'qnaire_alternate_consent_type_trigger' );
-      $module->add_child( 'qnaire_proxy_type_trigger' );
-      $module->add_child( 'qnaire_equipment_type_trigger' );
-      $module->add_child( 'stage' );
-      $module->add_child( 'qnaire_document' );
-      $module->add_child( 'qnaire_report' );
-      $module->add_child( 'device' );
-      $module->add_child( 'deviation_type' );
-      $module->add_child( 'embedded_file' );
-      $module->add_choose( 'language' );
-      $module->add_action( 'clone', '/{identifier}' );
-      $module->add_action( 'import_responses', '/{identifier}' );
-      $module->add_action( 'get_respondent', '/{identifier}' );
-      $module->add_action( 'mass_respondent', '/{identifier}' );
-      $module->add_action( 'import' );
-      $module->add_action( 'patch', '/{identifier}' );
+      $qnaire_module->add_child( 'respondent' );
+      $qnaire_module->add_child( 'reminder' );
+      $qnaire_module->add_child( 'qnaire_description' );
+      $qnaire_module->add_child( 'module' );
+      $qnaire_module->add_child( 'question' );
+      $qnaire_module->add_child( 'attribute' );
+      $qnaire_module->add_child( 'qnaire_consent_type_confirm' );
+      $qnaire_module->add_child( 'qnaire_participant_trigger' );
+      $qnaire_module->add_child( 'qnaire_collection_trigger' );
+      $qnaire_module->add_child( 'qnaire_consent_type_trigger' );
+      $qnaire_module->add_child( 'qnaire_event_type_trigger' );
+      $qnaire_module->add_child( 'qnaire_alternate_consent_type_trigger' );
+      $qnaire_module->add_child( 'qnaire_proxy_type_trigger' );
+      $qnaire_module->add_child( 'qnaire_equipment_type_trigger' );
+      $qnaire_module->add_child( 'stage' );
+      $qnaire_module->add_child( 'qnaire_document' );
+      $qnaire_module->add_child( 'qnaire_report' );
+      $qnaire_module->add_child( 'device' );
+      $qnaire_module->add_child( 'deviation_type' );
+      $qnaire_module->add_child( 'embedded_file' );
+      $qnaire_module->add_choose( 'language' );
+      $qnaire_module->add_action( 'clone', '/{identifier}' );
+      $qnaire_module->add_action( 'import_responses', '/{identifier}' );
+      $qnaire_module->add_action( 'get_respondent', '/{identifier}' );
+      $qnaire_module->add_action( 'mass_respondent', '/{identifier}' );
+      $qnaire_module->add_action( 'import' );
+      $qnaire_module->add_action( 'patch', '/{identifier}' );
     }
 
     // remove unneeded choose/child relationships
@@ -201,6 +201,9 @@ class ui extends \cenozo\ui\ui
       $module->add_child( 'response' );
       $module->add_child( 'respondent_mail' );
       $module->add_action( 'run', '/{token}?{show_hidden}&{site}&{username}&{alternate_id}' );
+
+      if( !is_null( $qnaire_module ) && $qnaire_module->has_action('edit') )
+        $module->add_action( 'reassign' );
 
       // add response children and actions here in case the qnaire is only done once
       $module->add_child( 'response_stage' );
@@ -310,6 +313,13 @@ class ui extends \cenozo\ui\ui
 
     // don't show the user overview to respondents
     if( 'interviewer' == $db_role->name ) unset( $list['User Overview'] );
+    
+    // allow the reassign utility if the role has access to adding qnaires
+    $qnaire_module = $this->get_module( 'qnaire' );
+    if( !is_null( $qnaire_module ) && $qnaire_module->has_action( 'edit' ) )
+    {
+      $list['Reassign Respondent'] = ['subject' => 'respondent', 'action' => 'reassign'];
+    }
 
     return $list;
   }
