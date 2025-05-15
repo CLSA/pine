@@ -314,13 +314,6 @@ class ui extends \cenozo\ui\ui
     // don't show the user overview to respondents
     if( 'interviewer' == $db_role->name ) unset( $list['User Overview'] );
     
-    // allow the reassign utility if the role has access to adding qnaires
-    $qnaire_module = $this->get_module( 'qnaire' );
-    if( !is_null( $qnaire_module ) && $qnaire_module->has_action( 'edit' ) )
-    {
-      $list['Reassign Respondent'] = ['subject' => 'respondent', 'action' => 'reassign'];
-    }
-
     return $list;
   }
 
