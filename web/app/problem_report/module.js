@@ -31,18 +31,39 @@ cenozoApp.defineModule({
         },
         show_hidden: {
           title: "Show Hidden",
-          type: "boolean",
+          type: "hidden",
         },
         page_name: {
           title: "Page",
         },
         remote_address: {
           title: "Remote Address",
+          type: "hidden",
+        },
+        user_agent: {
+          title: "User Agent",
+          type: "hidden",
+        },
+        brand: {
+          title: "Brand",
+          type: "hidden",
+        },
+        platform: {
+          title: "Platform",
+          type: "hidden",
+        },
+        mobile: {
+          title: "Mobile",
+          type: "hidden",
         },
         datetime: {
           title: "Date & Time",
           column: "problem_report.datetime",
           type: "datetime"
+        },
+        description: {
+          title: "Description",
+          align: "left",
         },
       },
       defaultOrder: {
@@ -79,15 +100,15 @@ cenozoApp.defineModule({
         type: "string",
       },
       brand: {
-        title: "User Agent",
+        title: "Brand",
         type: "string",
       },
       platform: {
-        title: "User Agent",
+        title: "Platform",
         type: "string",
       },
       mobile: {
-        title: "User Agent",
+        title: "Mobile",
         type: "string",
       },
       datetime: {
@@ -98,7 +119,7 @@ cenozoApp.defineModule({
       description: {
         title: "Description",
         type: "text",
-      }
+      },
     });
 
     /* ############################################################################################## */
