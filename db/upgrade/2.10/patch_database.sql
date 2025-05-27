@@ -4,6 +4,7 @@ SET AUTOCOMMIT=0;
 
 SOURCE question.sql
 SOURCE qnaire_report.sql
+SOURCE qnaire_participant_trigger.sql
 
 SOURCE service.sql
 

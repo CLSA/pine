@@ -1128,7 +1128,8 @@ class qnaire extends \cenozo\database\record
           'email' => $db_participant->email,
 
           // these may be modified by participant triggers
-          'current_sex' => $db_participant->current_sex,
+          'gender_identity' => $db_participant->gender_identity,
+          'pronouns' => $db_participant->pronouns,
           'delink' => $db_participant->delink,
           'low_education' => $db_participant->low_education,
           'mass_email' => $db_participant->mass_email,
@@ -2602,7 +2603,8 @@ class qnaire extends \cenozo\database\record
       if( $participant->date_of_birth ) $db_participant->date_of_birth = $participant->date_of_birth;
 
       // these may be modified by participant triggers
-      $db_participant->current_sex = $participant->current_sex;
+      $db_participant->gender_identity = $participant->gender_identity;
+      $db_participant->pronouns = $participant->pronouns;
       $db_participant->delink = $participant->delink;
       $db_participant->low_education = $participant->low_education;
       $db_participant->mass_email = $participant->mass_email;

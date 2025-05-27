@@ -1372,10 +1372,15 @@ cenozoApp.defineModule({
                         enumList: this.participantModel.metadata.columnList.sex.enumList,
                       },
                       {
-                        key: "current_sex",
-                        title: "Current Sex",
+                        key: "gender_identity",
+                        title: "Gender Identity",
                         type: "enum",
-                        enumList: this.participantModel.metadata.columnList.current_sex.enumList,
+                        enumList: this.participantModel.metadata.columnList.gender_identity.enumList,
+                      },
+                      {
+                        key: "pronouns",
+                        title: "Pronouns",
+                        type: "string",
                       },
                       {
                         key: "email",
