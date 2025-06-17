@@ -90,6 +90,10 @@ class post extends \cenozo\service\post
     $qnaire_class_name = lib::get_class_name( 'database\qnaire' );
     if( $this->get_argument( 'import', false ) )
     {
+      // importing can involve huge files that need to be json_decoded which is memory-intensive
+      ini_set( 'memory_limit', '-1' );
+      set_time_limit( 900 ); // 15 minutes max
+
       $this->set_data( $qnaire_class_name::import( util::json_decode( $this->get_file_as_raw() ) ) );
     }
     else if( $this->get_argument( 'reassign', false ) )

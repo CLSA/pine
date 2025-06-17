@@ -79,6 +79,10 @@ class patch extends \cenozo\service\patch
   {
     if( $patch = $this->get_argument( 'patch', false ) )
     {
+      // patching can involve huge files that need to be json_decoded which is memory-intensive
+      ini_set( 'memory_limit', '-1' );
+      set_time_limit( 900 ); // 15 minutes max
+
       $db_qnaire = $this->get_leaf_record();
       $patch_object = util::json_decode( $this->get_file_as_raw() );
       if( is_null( $patch_object ) )
