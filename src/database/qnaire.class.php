@@ -141,6 +141,9 @@ class qnaire extends \cenozo\database\record
           __METHOD__
         );
       }
+
+      // automatically turn off debug mode
+      $this->debug = false;
     }
 
     if( $this->has_column_changed( 'anonymous' ) || $this->has_column_changed( 'stages' ) )
