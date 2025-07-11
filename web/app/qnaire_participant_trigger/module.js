@@ -60,7 +60,7 @@ cenozoApp.defineModule({
       value: {
         title: "Value",
         type: "string",
-        help: "Only boolean values (true or false) are currently accepted.",
+        help: "Strings must be enclosed in double quotes (\"), numbers and boolean values should be written without them.",
       },
       qnaire_id: { column: "qnaire.id", type: "hidden" },
     });

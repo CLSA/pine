@@ -41,8 +41,7 @@ class qnaire_participant_trigger extends qnaire_trigger
 
     // this is safe because the column_name is an enum type, so dangerous column names can't exist here
     $column_name = $this->column_name;
-    // currently only boolean columns are supported
-    $db_participant->$column_name = 'true' == $this->value;
+    $db_participant->$column_name = util::json_decode( $this->value );
     $db_participant->save();
   }
 }
