@@ -4546,6 +4546,7 @@ class qnaire extends \cenozo\database\record
             );
           }
 
+          $db_qnaire_participant_trigger = NULL;
           if( !is_null( $db_question ) )
           {
             $db_qnaire_participant_trigger = $qnaire_participant_trigger_class_name::get_unique_record(
