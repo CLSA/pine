@@ -1097,6 +1097,7 @@ class response extends \cenozo\database\has_rank
                  : $db_response_attribute->value;
         }
 
+        if( is_null( $value ) ) $value = '';
         $description = str_replace( $attribute_matches[0][$index], $value, $description );
       }
 
