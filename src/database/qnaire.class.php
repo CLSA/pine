@@ -188,11 +188,16 @@ class qnaire extends \cenozo\database\record
    */
   public function delete()
   {
+    // remove all response data
+    $data_dir = $this->get_data_directory();
+
     // if we have stages we have to explicitly delete them because of database constraint on-delete voodoo
     $delete_mod = lib::create( 'database\modifier' );
     $delete_mod->where( 'qnaire_id', '=', $this->id );
     static::db()->execute( sprintf( 'DELETE FROM stage %s', $delete_mod->get_sql() ) );
     parent::delete();
+
+    if( is_dir( $data_dir ) ) exec( sprintf( 'rm -rf "%s"', $data_dir ) );
   }
 
   /**
