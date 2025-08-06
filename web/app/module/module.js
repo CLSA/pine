@@ -222,7 +222,7 @@ cenozoApp.defineModule({
                   }, []);
 
                 this.parentModel.metadata.columnList.stage_rank.enumList = [];
-                const maxRank = parseInt(moduleCountResponse.headers("Total"));
+                const maxRank = parseInt(moduleCountResponse.headers("X-Total"));
                 for( var rank = 1; rank <= maxRank; rank++ ) {
                   this.parentModel.metadata.columnList.stage_rank.enumList.push({
                     value: rank,

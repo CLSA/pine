@@ -296,7 +296,7 @@ cenozoApp.initQnairePartModule = function (module, type) {
             path: type + "_description",
           }).head();
 
-          var columnList = angular.fromJson(response.headers("Columns"));
+          var columnList = angular.fromJson(response.headers("X-Columns"));
           columnList.value.required = "1" == columnList.value.required;
           if (angular.isUndefined(this.metadata.columnList.description))
             this.metadata.columnList.description = {};
