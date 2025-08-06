@@ -26,7 +26,7 @@ class lookup extends \cenozo\database\record
   public function import_from_array( $data, $apply = false )
   {
     ini_set( 'memory_limit', '-1' );
-    set_time_limit( 900 ); // 15 minutes max
+    set_time_limit( 7200 ); // 2 hours max
 
     $lookup_item_class_name = lib::get_class_name( 'database\lookup_item' );
     $indicator_class_name = lib::get_class_name( 'database\indicator' );
@@ -67,14 +67,18 @@ class lookup extends \cenozo\database\record
           $db_lookup_item = lib::create( 'database\lookup_item' );
           $db_lookup_item->lookup_id = $this->id;
           $db_lookup_item->identifier = $identifier;
-          $db_lookup_item->name = $name;
-          $db_lookup_item->description = $description;
-          $db_lookup_item->save();
         }
       }
       else
       {
         $result_data['lookup_item']['exists']++;
+      }
+
+      if( $apply )
+      {
+        $db_lookup_item->name = $name;
+        $db_lookup_item->description = $description;
+        $db_lookup_item->save();
       }
 
       // get a list of the lookup item's current indicators

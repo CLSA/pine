@@ -1172,6 +1172,8 @@ cenozoApp.defineModule({
               
               if (angular.isDefined(data.repeated) && data.repeated) {
                 await this.onView();
+              } else if (angular.isDefined(data.readonly) && data.readonly) {
+                this.record.debug = false;
               }
               
               if (

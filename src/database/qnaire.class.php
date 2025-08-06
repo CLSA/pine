@@ -141,6 +141,9 @@ class qnaire extends \cenozo\database\record
           __METHOD__
         );
       }
+
+      // automatically turn off debug mode
+      $this->debug = false;
     }
 
     if( $this->has_column_changed( 'anonymous' ) || $this->has_column_changed( 'stages' ) )
@@ -185,11 +188,16 @@ class qnaire extends \cenozo\database\record
    */
   public function delete()
   {
+    // remove all response data
+    $data_dir = $this->get_data_directory();
+
     // if we have stages we have to explicitly delete them because of database constraint on-delete voodoo
     $delete_mod = lib::create( 'database\modifier' );
     $delete_mod->where( 'qnaire_id', '=', $this->id );
     static::db()->execute( sprintf( 'DELETE FROM stage %s', $delete_mod->get_sql() ) );
     parent::delete();
+
+    if( is_dir( $data_dir ) ) exec( sprintf( 'rm -rf "%s"', $data_dir ) );
   }
 
   /**
@@ -294,6 +302,9 @@ class qnaire extends \cenozo\database\record
    */
   public function clone_from( $db_source_qnaire )
   {
+    ini_set( 'memory_limit', '-1' );
+    set_time_limit( 900 ); // 15 minutes max
+
     $reminder_description_class_name = lib::get_class_name( 'database\reminder_description' );
 
     $ignore_columns = ['id', 'update_timestamp', 'create_timestamp', 'name'];
@@ -2690,7 +2701,7 @@ class qnaire extends \cenozo\database\record
         $stratum_list = [];
         foreach( $stratum_name_list as $stratum )
         {
-          $parts = explode( '||', $stratum );
+          $parts = $stratum ? explode( '||', $stratum ) : [];
           $study_name = $parts[0];
           $stratum_name = $parts[1];
 
@@ -2742,9 +2753,11 @@ class qnaire extends \cenozo\database\record
       }
 
       // create participant_identifier records
-      $participant_identifier_list = $participant->participant_identifier_list
-                                   ? explode( ';', $participant->participant_identifier_list )
-                                   : [];
+      $participant_identifier_list = (
+        $participant->participant_identifier_list ?
+        explode( ';', $participant->participant_identifier_list ) :
+        []
+      );
 
       $identifier_mod = lib::create( 'database\modifier' );
       $identifier_mod->where( 'participant_id', '=', $db_participant->id );
@@ -2756,7 +2769,8 @@ class qnaire extends \cenozo\database\record
       foreach( $participant_identifier_list as $participant_identifier_entry )
       {
         // entries have the format: identifier_name$value, convert to an associative array
-        $participant_identifier_data = explode( '$', $participant_identifier_entry );
+        $participant_identifier_data =
+          $participant_identifier_entry ? explode( '$', $participant_identifier_entry ) : [];
         if( 2 != count( $participant_identifier_data ) ) continue;
 
         $identifier = [
@@ -2775,12 +2789,13 @@ class qnaire extends \cenozo\database\record
       // create consent records (NOTE: importing alternate consent has not been implemented)
       // NOTE: We can't delete and re-create them all because of database triggers!
       $new_consent_list = [];
-      foreach( explode( ';', $participant->consent_list ) as $consent_entry )
+      $consent_list = $participant->consent_list ? explode( ';', $participant->consent_list ) : [];
+      foreach( $consent_list as $consent_entry )
       {
         if( 0 == strlen( $consent_entry ) ) continue;
 
         // entries have the format: consent_type_name$accept$datetime, convert to an associative array
-        $consent_data = explode( '$', $consent_entry );
+        $consent_data = $consent_entry ? explode( '$', $consent_entry ) : [];
         if( 3 != count( $consent_data ) ) continue;
 
         $new_consent_list[] = [
@@ -2833,12 +2848,13 @@ class qnaire extends \cenozo\database\record
       // create event records (NOTE: importing alternate event has not been implemented)
       // NOTE: We can't delete and re-create them all because of database triggers!
       $new_event_list = [];
-      foreach( explode( ';', $participant->event_list ) as $event_entry )
+      $event_list = $participant->event_list ? explode( ';', $participant->event_list ) : [];
+      foreach( $event_list as $event_entry )
       {
         if( 0 == strlen( $event_entry ) ) continue;
 
         // entries have the format: event_type_name$datetime, convert to an associative array
-        $event_data = explode( '$', $event_entry );
+        $event_data = $event_entry ? explode( '$', $event_entry ) : [];
         if( 2 != count( $event_data ) ) continue;
 
         $new_event_list[] = [
@@ -3534,13 +3550,16 @@ class qnaire extends \cenozo\database\record
               else if( 'number with unit' == $column['type'] )
               {
                 // if the column has a unit_list property then this is the UNIT column, otherwise it's the value
-                if( array_key_exists( 'unit_list', $column ) )
+                if( is_object( $answer ) )
                 {
-                  if( property_exists( $answer, 'unit' ) ) $row_value = $answer->unit;
-                }
-                else
-                {
-                  if( property_exists( $answer, 'value' ) ) $row_value = $answer->value;
+                  if( array_key_exists( 'unit_list', $column ) )
+                  {
+                    if( property_exists( $answer, 'unit' ) ) $row_value = $answer->unit;
+                  }
+                  else
+                  {
+                    if( property_exists( $answer, 'value' ) ) $row_value = $answer->value;
+                  }
                 }
               }
               else // date, number, string, text and time are all just direct answers
@@ -4532,6 +4551,7 @@ class qnaire extends \cenozo\database\record
             );
           }
 
+          $db_qnaire_participant_trigger = NULL;
           if( !is_null( $db_question ) )
           {
             $db_qnaire_participant_trigger = $qnaire_participant_trigger_class_name::get_unique_record(
@@ -5613,6 +5633,9 @@ class qnaire extends \cenozo\database\record
    */
   public function generate( $type = 'export', $return_value = false )
   {
+    ini_set( 'memory_limit', '-1' );
+    set_time_limit( 900 ); // 15 minutes max
+
     $separator = "====================================================================================\n\n";
     $qnaire_data = [
       'base_language' => $this->get_base_language()->code,
@@ -5915,7 +5938,9 @@ class qnaire extends \cenozo\database\record
                   'indicator_list' => []
                 ];
 
-                foreach( explode( ',', $lookup_item['indicator_list'] ) as $indicator )
+                $indicator_list =
+                  $lookup_item['indicator_list'] ? explode( ';', $lookup_item['indicator_list'] ) : [];
+                foreach( $indicator_list as $indicator )
                 {
                   $indicator = trim( $indicator, '"' );
                   if( 0 < strlen( $indicator ) ) $item['indicator_list'][] = $indicator;

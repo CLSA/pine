@@ -253,32 +253,20 @@ class response_stage extends \cenozo\database\record
    */
   private function delete_answers()
   {
-    // delete all questions belonging to each module belonging to the stage
-    $module_sel = lib::create( 'database\select' );
-    $module_sel->add_column( 'id' );
-    foreach( $this->get_stage()->get_module_list( $module_sel ) as $module )
-    {
-      // remove answers
-      $question_sel = lib::create( 'database\select' );
-      $question_sel->from( 'question' );
-      $question_sel->add_column( 'id' );
-      $question_mod = lib::create( 'database\modifier' );
-      $question_mod->join( 'page', 'question.page_id', 'page.id' );
-      $question_mod->where( 'page.module_id', '=', $module['id'] );
-      $sub_select_sql = sprintf( '( %s %s )', $question_sel->get_sql(), $question_mod->get_sql() );
+    $answer_class_name = lib::get_class_name( 'database\answer' );
 
-      $answer_mod = lib::create( 'database\modifier' );
-      $answer_mod->where( 'response_id', '=', $this->response_id );
-      $answer_mod->where( 'question_id', 'IN', $sub_select_sql, false );
-      $sql = sprintf( 'DELETE FROM answer %s', $answer_mod->get_sql() );
-      static::db()->execute( $sql );
+    // delete all questions belonging to each module belonging to the stage
+    $db_response = $this->get_response();
+    foreach( $this->get_stage()->get_module_object_list() as $db_module )
+    {
+      $db_response->delete_answers_in_module( $db_module );
 
       // remove page time
       $page_sel = lib::create( 'database\select' );
       $page_sel->from( 'page' );
       $page_sel->add_column( 'id' );
       $page_mod = lib::create( 'database\modifier' );
-      $page_mod->where( 'module_id', '=', $module['id'] );
+      $page_mod->where( 'module_id', '=', $db_module->id );
       $sub_select_sql = sprintf( '( %s %s )', $page_sel->get_sql(), $page_mod->get_sql() );
 
       $page_time_mod = lib::create( 'database\modifier' );

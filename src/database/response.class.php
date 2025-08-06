@@ -628,22 +628,18 @@ class response extends \cenozo\database\has_rank
    * Removes all answers in this response belonging to a module
    * @param database\module $db_module
    */
-   public function delete_answers_in_module( $db_module )
-   {
-     $question_sel = lib::create( 'database\select' );
-     $question_sel->from( 'question' );
-     $question_sel->add_column( 'id' );
-     $question_mod = lib::create( 'database\modifier' );
-     $question_mod->join( 'page', 'question.page_id', 'page.id' );
-     $question_mod->where( 'page.module_id', '=', $db_module->id );
-     $question_sql = sprintf( '%s %s', $question_sel->get_sql(), $question_mod->get_sql() );
+  public function delete_answers_in_module( $db_module )
+  {
+    $answer_class_name = lib::get_class_name( 'database\answer' );
 
-     $modifier = lib::create( 'database\modifier' );
-     $modifier->where( 'response_id', '=', $this->id );
-     $modifier->where( 'question_id', 'IN', $question_sql, false );
-     $sql = sprintf( 'DELETE FROM answer %s', $modifier->get_sql() );
-     static::db()->execute( $sql );
-   }
+    $modifier = lib::create( 'database\modifier' );
+    $modifier->join( 'question', 'answer.question_id', 'question.id' );
+    $modifier->join( 'page', 'question.page_id', 'page.id' );
+    $modifier->where( 'answer.response_id', '=', $this->id );
+    $modifier->where( 'page.module_id', '=', $db_module->id );
+
+    foreach( $answer_class_name::select_objects( $modifier ) as $db_answer ) $db_answer->delete();
+  }
 
   /**
    * Removes all answers in this response belonging to a page
@@ -651,18 +647,14 @@ class response extends \cenozo\database\has_rank
    */
   public function delete_answers_in_page( $db_page )
   {
-    $question_sel = lib::create( 'database\select' );
-    $question_sel->from( 'question' );
-    $question_sel->add_column( 'id' );
-    $question_mod = lib::create( 'database\modifier' );
-    $question_mod->where( 'question.page_id', '=', $db_page->id );
-    $question_sql = sprintf( '%s %s', $question_sel->get_sql(), $question_mod->get_sql() );
+    $answer_class_name = lib::get_class_name( 'database\answer' );
 
     $modifier = lib::create( 'database\modifier' );
-    $modifier->where( 'response_id', '=', $this->id );
-    $modifier->where( 'question_id', 'IN', $question_sql, false );
-    $sql = sprintf( 'DELETE FROM answer %s', $modifier->get_sql() );
-    static::db()->execute( $sql );
+    $modifier->join( 'question', 'answer.question_id', 'question.id' );
+    $modifier->where( 'answer.response_id', '=', $this->id );
+    $modifier->where( 'question.page_id', '=', $db_page->id );
+
+    foreach( $answer_class_name::select_objects( $modifier ) as $db_answer ) $db_answer->delete();
   }
 
   /**
@@ -1097,6 +1089,7 @@ class response extends \cenozo\database\has_rank
                  : $db_response_attribute->value;
         }
 
+        if( is_null( $value ) ) $value = '';
         $description = str_replace( $attribute_matches[0][$index], $value, $description );
       }
 

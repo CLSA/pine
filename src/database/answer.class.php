@@ -168,6 +168,19 @@ class answer extends \cenozo\database\record
   }
 
   /**
+   * Override the parent method
+   */
+  public function delete()
+  {
+    $data_dir = $this->get_data_directory();
+
+    parent::delete();
+
+    // We must also delete all files associated with this answer
+    if( is_dir( $data_dir ) ) exec( sprintf( 'rm -rf "%s"', $data_dir ) );
+  }
+
+  /**
    * Override parent method
    */
   public static function get_unique_record( $column, $value )
