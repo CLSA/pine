@@ -3284,7 +3284,8 @@ class qnaire extends \cenozo\database\record
   /**
    * Returns an array of all responses to this qnaire
    * @param database\modifier $modifier
-   * @param boolean $exporting Whether the data is being exported (some questions are marked to not be exported)
+   * @param boolean $exporting Whether the data is being exported
+   *   When exporting questions marked for export are excluded and the cohort column is not included
    * @param boolean $attributes Whether to include attribute values
    * @param boolean $answers_only Whether to restrict responses to those with one or more answers
    * @return ['header', 'data']
@@ -3311,6 +3312,10 @@ class qnaire extends \cenozo\database\record
     $response_mod->left_join( 'site', 'response.site_id', 'site.id' );
     $response_mod->where( 'respondent.qnaire_id', '=', $this->id );
     $response_mod->order( 'respondent.end_datetime' );
+    if( !$exporting )
+    {
+      $response_mod->join( 'cohort', 'participant.cohort_id', 'cohort.id' );
+    }
     if( $use_relation )
     {
       $response_mod->left_join( 'relation', 'participant.id', 'relation.participant_id' );
@@ -3350,6 +3355,7 @@ class qnaire extends \cenozo\database\record
       false
     );
     $response_sel->add_table_column( 'participant', 'uid' );
+    if( !$exporting ) $response_sel->add_table_column( 'cohort', 'name', 'cohort' );
     if( $use_relation )
     {
       $response_sel->add_table_column( 'relation_type', 'name', 'relation_type' );
@@ -3419,7 +3425,11 @@ class qnaire extends \cenozo\database\record
       // if requested, don't add responses with no answers
       if( $answers_only && is_null( $answer_list ) ) continue;
 
-      $data_row = [$response['uid'], $response['token']];
+      $data_row = (
+        $exporting ?
+        [$response['uid'], $response['token']] :
+        [$response['uid'], $response['cohort'], $response['token']]
+      );
       if( $use_relation )
       {
         $data_row[] = $response['relation_type'];
@@ -3586,7 +3596,7 @@ class qnaire extends \cenozo\database\record
       $data[] = $data_row;
     }
 
-    $header = ['uid', 'token'];
+    $header = $exporting ? ['uid', 'token'] : ['uid', 'cohort', 'token'];
     if( $use_relation )
     {
       $header[] = 'relation_type';
