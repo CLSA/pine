@@ -246,6 +246,7 @@ class ui extends \cenozo\ui\ui
     $module = $this->get_module( 'question' );
     if( !is_null( $module ) )
     {
+      $module->add_child( 'answer' );
       $module->add_child( 'question_description' );
       $module->add_child( 'question_option' );
       $module->add_child( 'qnaire_participant_trigger' );
