@@ -21,6 +21,8 @@ class module extends \cenozo\service\module
     parent::prepare_read( $select, $modifier );
 
     $modifier->join( 'response', 'answer.response_id', 'response.id' );
+    $modifier->join( 'respondent', 'response.respondent_id', 'respondent.id' );
+    $modifier->left_join( 'participant', 'respondent.participant_id', 'participant.id' );
     $modifier->join( 'question', 'answer.question_id', 'question.id' );
     $modifier->join( 'language', 'answer.language_id', 'language.id' );
     $modifier->left_join( 'user', 'answer.user_id', 'user.id' );

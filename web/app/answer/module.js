@@ -1,0 +1,43 @@
+cenozoApp.defineModule({
+  name: "answer",
+  models: "list",
+  create: (module) => {
+    angular.extend(module, {
+      identifier: {}, // standard
+      name: {
+        singular: "answer",
+        plural: "answers",
+        possessive: "answer's",
+      },
+      columnList: {
+        uid: { column: "participant.uid", title: "Participant", },
+        token: { column: "respondent.token", title: "Token", },
+        user: { column: "user.name", title: "User", },
+        value: { title: "Value", },
+      },
+      defaultOrder: {
+        column: "respondent.token",
+        reverse: true,
+      },
+    });
+
+    /* ############################################################################################## */
+    cenozo.providers.factory("CnAnswerListFactory", [
+      "CnBaseListFactory", "$state",
+      function (CnBaseListFactory, $state) {
+        var object = function (parentModel) {
+          CnBaseListFactory.construct(this, parentModel);
+
+          this.onSelect = function (record) {
+            $state.go("respondent.view", { identifier: "token="+record.token });
+          };
+        };
+        return {
+          instance: function (parentModel) {
+            return new object(parentModel);
+          },
+        };
+      },  
+    ]); 
+  },
+});
