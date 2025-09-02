@@ -796,7 +796,8 @@ class response extends \cenozo\database\has_rank
         $value = NULL;
         try
         {
-          $value = strtoupper( $this->compile_expression( $report_data['code'], true ) );
+          $value = $this->compile_expression( $report_data['code'], true );
+          if( !is_null( $value ) ) $value = strtoupper( $value );
 
           // PDF checkboxes require the answer to be "Yes" (case is important)
           if( 'YES' == $value ) $value = 'Yes';
