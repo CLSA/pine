@@ -2471,8 +2471,10 @@ class qnaire extends \cenozo\database\record
    * Deletes all respondents which have been exported for longer than the purge delay
    * (Note: this does nothing if not in detached mode)
    */
-  public function delete_purged_respondents()
+  public static function delete_purged_respondents()
   {
+    $respondent_class_name = lib::get_class_name( 'database\respondent' );
+
     $setting_manager = lib::create( 'business\setting_manager' );
     if( !$setting_manager->get_setting( 'general', 'detached' ) || is_null( PARENT_INSTANCE_URL ) )
     {
@@ -2487,12 +2489,12 @@ class qnaire extends \cenozo\database\record
       'UTC_TIMESTAMP()',
       false
     );
-    foreach( $this->get_respondent_object_list( $respondent_mod ) as $db_respondent )
+    foreach( $respondent_class_name::select_objects( $respondent_mod ) as $db_respondent )
     {
       log::info( sprintf(
         'Purged respondent %s from questionnaire "%s"',
         $db_respondent->get_participant()->uid,
-        $this->name
+        $db_respondent->get_qnaire()->name
       ) );
       $db_respondent->delete();
     }

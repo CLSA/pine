@@ -51,7 +51,11 @@ class module extends \cenozo\service\module
    */
   public function prepare_read( $select, $modifier )
   {
+    $qnaire_class_name = lib::get_class_name( 'database\qnaire' );
     $detached = lib::create( 'business\setting_manager' )->get_setting( 'general', 'detached' );
+
+    // first purge all expired respondents
+    if( $detached ) $qnaire_class_name::delete_purged_respondents();
 
     parent::prepare_read( $select, $modifier );
 
