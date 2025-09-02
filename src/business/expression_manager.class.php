@@ -1044,7 +1044,7 @@ class expression_manager extends \cenozo\singleton
             );
           }
 
-          $compiled = $sub_path->data()[0];
+          $compiled = $sub_path->getData()[0];
           if( is_null( $value ) ) $compiled = 'NULL';
           else if( is_bool( $value ) ) $compiled = $value ? 'true' : 'false';
           else if( is_string( $value ) )
