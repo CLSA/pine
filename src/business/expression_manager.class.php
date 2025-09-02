@@ -113,6 +113,11 @@ class expression_manager extends \cenozo\singleton
     {
       $response = is_null( $this->db_response ) ? true : eval( sprintf( 'return (%s);', $compiled ) );
     }
+    catch( \DivisionByZeroError $e )
+    {
+      // if the evaluated expression is division by zero then return the value as an empty string
+      $response = '';
+    }
     catch( \ParseError $e )
     {
       throw lib::create( 'exception\runtime',
