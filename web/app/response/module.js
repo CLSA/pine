@@ -329,8 +329,8 @@ cenozoApp.defineModule({
 
     /* ############################################################################################## */
     cenozo.providers.factory("CnResponseViewFactory", [
-      "CnBaseViewFactory",
-      function (CnBaseViewFactory) {
+      "CnBaseViewFactory", "CnHttpFactory",
+      function (CnBaseViewFactory, CnHttpFactory) {
         var object = function (parentModel, root) {
           CnBaseViewFactory.construct(
             this,
