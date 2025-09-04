@@ -41,7 +41,7 @@ cenozoApp.defineModule({
           type: "datetimesecond",
         },
         end_datetime: {
-          column: "response_stage.start_datetime",
+          column: "response_stage.end_datetime",
           title: "End Date & Time",
           type: "datetimesecond",
         },
