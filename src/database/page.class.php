@@ -224,15 +224,47 @@ class page extends base_qnaire_part
         $db_module = $db_next_page->get_module();
         if( !$expression_manager->evaluate( $db_module->precondition ) )
         {
-          $db_module = $db_module->get_next_for_response( $db_response );
-          $db_next_page = is_null( $db_module ) ? NULL : $db_module->get_first_page_for_response( $db_response );
-        }
+          // if not valid then find the next module with a valid page and return that page
+          while( true )
+          {
+            $db_module = $db_module->get_next_for_response( $db_response );
+            $db_next_page = is_null( $db_module ) ? NULL : $db_module->get_first_page_for_response( $db_response );
 
-        // if there is a next page then make sure to test its precondition if a response is included in the request
-        if( !is_null( $db_next_page ) && !$expression_manager->evaluate( $db_next_page->precondition ) )
+            if( !is_null( $db_module ) )
+            {
+              if( is_null( $db_next_page ) )
+              {
+                // delete all answers for this module and keep looking
+                $db_response->delete_answers_in_module( $db_module );
+              }
+              else
+              {
+                // delete the answers for all pages in this module that come before the next page
+                foreach( $db_module->get_page_object_list() as $db_page )
+                {
+                  if( $db_page->rank < $db_next_page->rank ) $db_response->delete_answers_in_page( $db_page );
+                }
+
+                // now stop looking
+                break;
+              }
+            }
+            else
+            {
+              // we've run out of modules, so the questionnaire is done
+              $db_next_page = NULL;
+              break;
+            }
+          }
+        }
+        else
         {
-          $db_response->delete_answers_in_page( $db_next_page );
-          $db_next_page = $db_next_page->get_next_for_response( $db_response );
+          // the current module is valid, so check if the next page is valid and go to the next if it isn't
+          if( !is_null( $db_next_page ) && !$expression_manager->evaluate( $db_next_page->precondition ) )
+          {
+            $db_response->delete_answers_in_page( $db_next_page );
+            $db_next_page = $db_next_page->get_next_for_response( $db_response );
+          }
         }
       }
       catch( \cenozo\exception\runtime $e )
