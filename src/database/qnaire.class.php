@@ -3309,29 +3309,25 @@ class qnaire extends \cenozo\database\record
     $data = [];
     $response_mod = lib::create( 'database\modifier' );
     $response_mod->join( 'respondent', 'response.respondent_id', 'respondent.id' );
+    $response_mod->left_join( 'participant', 'respondent.participant_id', 'participant.id' );
     $response_mod->join( 'language', 'response.language_id', 'language.id' );
     $response_mod->left_join( 'site', 'response.site_id', 'site.id' );
     $response_mod->where( 'respondent.qnaire_id', '=', $this->id );
     $response_mod->order( 'respondent.end_datetime' );
-
-    if( !$this->anonymous )
+    if( !$exporting )
     {
-      $response_mod->left_join( 'participant', 'respondent.participant_id', 'participant.id' );
-      if( !$exporting )
-      {
-        $response_mod->left_join( 'cohort', 'participant.cohort_id', 'cohort.id' );
-      }
-      if( $use_relation )
-      {
-        $response_mod->left_join( 'relation', 'participant.id', 'relation.participant_id' );
-        $response_mod->left_join( 'relation_type', 'relation.relation_type_id', 'relation_type.id' );
-        $response_mod->left_join(
-          'participant',
-          'relation.primary_participant_id',
-          'primary_participant.id',
-          'primary_participant'
-        );
-      }
+      $response_mod->left_join( 'cohort', 'participant.cohort_id', 'cohort.id' );
+    }
+    if( $use_relation )
+    {
+      $response_mod->left_join( 'relation', 'participant.id', 'relation.participant_id' );
+      $response_mod->left_join( 'relation_type', 'relation.relation_type_id', 'relation_type.id' );
+      $response_mod->left_join(
+        'participant',
+        'relation.primary_participant_id',
+        'primary_participant.id',
+        'primary_participant'
+      );
     }
 
     if( !is_null( $modifier ) )
@@ -3360,16 +3356,12 @@ class qnaire extends \cenozo\database\record
       'last_datetime',
       false
     );
-
-    if( !$this->anonymous )
+    $response_sel->add_table_column( 'participant', 'uid' );
+    if( !$exporting ) $response_sel->add_table_column( 'cohort', 'name', 'cohort' );
+    if( $use_relation )
     {
-      $response_sel->add_table_column( 'participant', 'uid' );
-      if( !$exporting ) $response_sel->add_table_column( 'cohort', 'name', 'cohort' );
-      if( $use_relation )
-      {
-        $response_sel->add_table_column( 'relation_type', 'name', 'relation_type' );
-        $response_sel->add_table_column( 'primary_participant', 'uid', 'primary_uid' );
-      }
+      $response_sel->add_table_column( 'relation_type', 'name', 'relation_type' );
+      $response_sel->add_table_column( 'primary_participant', 'uid', 'primary_uid' );
     }
 
     $response_attribute_data = array();
@@ -3435,16 +3427,12 @@ class qnaire extends \cenozo\database\record
       // if requested, don't add responses with no answers
       if( $answers_only && is_null( $answer_list ) ) continue;
 
-      $data_row = [];
-      if( !$this->anonymous )
-      {
-        $data_row[] = $response['uid'];
-        if( !$exporting ) $data_row[] = $response['cohort'];
-      }
-
-      $data_row[] = $response['token'];
-
-      if( !$this->anonymous && $use_relation )
+      $data_row = (
+        $exporting ?
+        [$response['uid'], $response['token']] :
+        [$response['uid'], $response['cohort'], $response['token']]
+      );
+      if( $use_relation )
       {
         $data_row[] = $response['relation_type'];
         $data_row[] = $response['primary_uid'];
@@ -3610,16 +3598,8 @@ class qnaire extends \cenozo\database\record
       $data[] = $data_row;
     }
 
-    $header = [];
-    if( !$this->anonymous )
-    {
-      $header[] = 'uid';
-      if( !$exporting ) $header[] = 'cohort';
-    }
-
-    $header[] = 'token';
-
-    if( !$this->anonymous && $use_relation )
+    $header = $exporting ? ['uid', 'token'] : ['uid', 'cohort', 'token'];
+    if( $use_relation )
     {
       $header[] = 'relation_type';
       $header[] = 'primary_uid';
