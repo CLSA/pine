@@ -432,7 +432,12 @@ class respondent extends \cenozo\database\record
           $db_mail->participant_id = $db_participant->id;
           $db_mail->from_name = $db_qnaire->email_from_name;
           $db_mail->from_address = $db_qnaire->email_from_address;
-          $db_mail->to_name = $db_participant->get_full_name();
+          $db_mail->to_name = sprintf(
+            '%s %s %s',
+            $db_participant->honorific,
+            $db_participant->first_name,
+            $db_participant->last_name
+          );
           $db_mail->to_address = $db_participant->email;
           $db_mail->schedule_datetime = $datetime;
           $db_mail->subject = $db_subject_description->get_compiled_value( $this, $rank );
