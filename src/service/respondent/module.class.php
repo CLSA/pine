@@ -23,8 +23,9 @@ class module extends \cenozo\service\module
     if( $this->service->may_continue() )
     {
       // only allow interviewers to delete respondents with no answers
+      $method = $this->get_method();
       $db_role = lib::create( 'business\session' )->get_role();
-      if( 'interviewer' == $db_role->name && 'DELETE' == $this->get_method() )
+      if( 'interviewer' == $db_role->name && 'DELETE' == $method )
       {
         $db_respondent = $this->get_resource();
         if( !is_null( $db_respondent ) )
@@ -41,6 +42,21 @@ class module extends \cenozo\service\module
               break;
             }
           }
+        }
+      }
+      // make sure the token matches the token_regex
+      else if( 'PATCH' == $method )
+      {
+        $patch_array = $this->get_file_as_array();
+        $db_qnaire = $this->get_resource()->get_qnaire();
+        $token_regex = is_null( $db_qnaire->token_regex ) ? NULL : sprintf( '/%s/', $db_qnaire->token_regex );
+        if(
+          $db_qnaire->token_regex &&
+          array_key_exists( 'token', $patch_array ) &&
+          !preg_match( $token_regex, $patch_array['token'] )
+        ) {
+          $this->get_status()->set_code( 306 );
+          $this->set_data( 'The token you have provided does not match the correct format.' );
         }
       }
     }
