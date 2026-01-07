@@ -74,12 +74,15 @@ class qnaire_consent_type_trigger extends qnaire_trigger
           ['participant_id', 'datetime'],
           [$db_participant->id, $db_consent->datetime]
         );
-        $db_hold_type = $db_hold->get_hold_type();
-        if( 'final' == $db_hold_type->type && 'Withdrawn' == $db_hold_type->name )
+        if( !is_null( $db_hold ) )
         {
-          $db_hold->site_id = $db_effective_site->id;
-          $db_hold->user_id = $db_effective_user->id;
-          $db_hold->save();
+          $db_hold_type = $db_hold->get_hold_type();
+          if( 'final' == $db_hold_type->type && 'Withdrawn' == $db_hold_type->name )
+          {
+            $db_hold->site_id = $db_effective_site->id;
+            $db_hold->user_id = $db_effective_user->id;
+            $db_hold->save();
+          }
         }
       }
     }
