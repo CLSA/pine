@@ -562,21 +562,21 @@ class expression_manager extends \cenozo\singleton
       $compiled = sprintf( '%%%s%%', $attribute_name );
       if( !is_null( $this->db_response ) )
       {
-        $this->db_response_attribute = $response_attribute_class_name::get_unique_record(
+        $db_response_attribute = $response_attribute_class_name::get_unique_record(
           array( 'response_id', 'attribute_id' ),
           array( $this->db_response->id, $db_attribute->id )
         );
 
         // Try creating any missing response attributes (this may happen with new attributes)
-        if( is_null( $this->db_response_attribute ) )
+        if( is_null( $db_response_attribute ) )
         {
-          $this->db_response_attribute = lib::create( 'database\response_attribute' );
-          $this->db_response_attribute->response_id = $this->db_response->id;
-          $this->db_response_attribute->attribute_id = $db_attribute->id;
+          $db_response_attribute = lib::create( 'database\response_attribute' );
+          $db_response_attribute->response_id = $this->db_response->id;
+          $db_response_attribute->attribute_id = $db_attribute->id;
           // participant-specific attributes will always be NULL for anonymous respondents
-          $this->db_response_attribute->value =
+          $db_response_attribute->value =
             $db_attribute->get_participant_value( $this->db_response->get_participant() );
-          $this->db_response_attribute->save();
+          $db_response_attribute->save();
         }
 
         if( 'indicator' == $special_function )
@@ -585,7 +585,7 @@ class expression_manager extends \cenozo\singleton
 
           $db_lookup_item = $lookup_item_class_name::get_unique_record(
             array( 'lookup_id', 'identifier' ),
-            array( $db_lookup->id, $this->db_response_attribute->value )
+            array( $db_lookup->id, $db_response_attribute->value )
           );
 
           if( !is_null( $db_lookup_item ) )
@@ -597,8 +597,8 @@ class expression_manager extends \cenozo\singleton
         }
         else
         {
-          $compiled = is_null( $this->db_response_attribute->value ) ?
-            'null' : addslashes( $this->db_response_attribute->value );
+          $compiled = is_null( $db_response_attribute->value ) ?
+            'null' : addslashes( $db_response_attribute->value );
 
           // add quotes if required
           if( 'null' != $compiled &&
