@@ -284,18 +284,12 @@ class util extends \cenozo\util
     $response = curl_exec( $curl );
     if( curl_errno( $curl ) )
     {
-      throw lib::create( 'exception\runtime',
-        sprintf(
-          'Got error code %s when synchronizing %s data with parent instance.'."\n".
-          'URL: "%s"'."\n".
-          'Message: %s',
-          curl_errno( $curl ),
-          $subject,
-          $url,
-          curl_error( $curl )
-        ),
-        __METHOD__
+      $message = sprintf(
+        'Unable to reach remote Pine server (networking error %s).',
+        curl_errno( $curl )
       );
+      log::info( $message );
+      throw lib::create( 'exception\notice', $message, __METHOD__ );
     }
 
     $code = curl_getinfo( $curl, CURLINFO_HTTP_CODE );

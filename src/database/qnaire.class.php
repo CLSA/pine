@@ -1456,12 +1456,12 @@ class qnaire extends \cenozo\database\record
       $curl_response = curl_exec( $curl );
       if( curl_errno( $curl ) )
       {
-        throw lib::create( 'exception\runtime',
-          sprintf( 'Got error code %s when sending participant data to Beartooth.  Message: %s',
-                   curl_errno( $curl ),
-                   curl_error( $curl ) ),
-          __METHOD__
+        $message = sprintf(
+          'Unable to reach remote Beartooth server (networking error %s).',
+          curl_errno( $curl )
         );
+        log::info( $message );
+        throw lib::create( 'exception\notice', $message, __METHOD__ );
       }
 
       $code = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
@@ -2542,12 +2542,12 @@ class qnaire extends \cenozo\database\record
     $curl_response = curl_exec( $curl );
     if( curl_errno( $curl ) )
     {
-      throw lib::create( 'exception\runtime',
-        sprintf( 'Got error code %s when getting appointment list from Beartooth.  Message: %s',
-                 curl_errno( $curl ),
-                 curl_error( $curl ) ),
-        __METHOD__
+      $message = sprintf(
+        'Unable to reach remote Beartooth server (networking error %s).',
+        curl_errno( $curl )
       );
+      log::info( $message );
+      throw lib::create( 'exception\notice', $message, __METHOD__ );
     }
 
     $code = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
@@ -6926,12 +6926,12 @@ class qnaire extends \cenozo\database\record
     $curl_response = curl_exec( $curl );
     if( curl_errno( $curl ) )
     {
-      throw lib::create( 'exception\runtime',
-        sprintf( 'Got error code %s when exporting respondent data to parent instance.  Message: %s',
-                 curl_errno( $curl ),
-                 curl_error( $curl ) ),
-        __METHOD__
+      $message = sprintf(
+        'Unable to reach remote Pine server (networking error %s).',
+        curl_errno( $curl )
       );
+      log::info( $message );
+      throw lib::create( 'exception\notice', $message, __METHOD__ );
     }
 
     $code = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
