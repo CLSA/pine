@@ -1401,16 +1401,10 @@ cenozo.service("CnModalPreStageFactory", [
                 angular.extend($scope, {
                   model: self,
                   showDeviationComments: function () {
-                    if (!$scope.model.deviationTypeId) return false;
-                    var deviationType =
-                      $scope.model.deviationTypeList.findByProperty(
-                        "id",
-                        $scope.model.deviationTypeId
-                      );
-                    return (
-                      null != deviationType &&
-                      "other" == deviationType.name.toLowerCase()
-                    );
+                    return $scope.model.deviationTypeList.findByProperty(
+                      "id",
+                      $scope.model.deviationTypeId
+                    ).other;
                   },
                   checkToken: function () {
                     const element = $scope.form.token;
@@ -1429,30 +1423,39 @@ cenozo.service("CnModalPreStageFactory", [
                       }
                     }
                   },
+                  canProceed: function () {
+                    const deviationType = $scope.model.deviationTypeList.findByProperty(
+                      "id",
+                      $scope.model.deviationTypeId
+                    );
+                    return (
+                      $scope.form.$valid &&
+                      deviationType.id &&
+                      (!deviationType.other || $scope.model.deviationComments)
+                    );
+                  },
                   ok: function () {
                     if (!$scope.form.$valid) {
                       // dirty all relevant inputs so we can find the problem
                       $scope.form.token.$dirty = true;
-                      if (null != $scope.model.deviationTypeList)
-                        $scope.form.deviationTypeId.$dirty = true;
-                      if ($scope.showDeviationComments())
-                        $scope.form.deviationComments.$dirty = true;
+                      if (null != $scope.model.deviationTypeList) $scope.form.deviationTypeId.$dirty = true;
+                      if ($scope.showDeviationComments()) $scope.form.deviationComments.$dirty = true;
                     } else {
                       var response = { comments: $scope.model.comments };
                       if (null != $scope.model.deviationTypeList) {
-                        response.deviation_type_id =
-                          $scope.model.deviationTypeId;
-                        response.deviation_comments =
-                          $scope.showDeviationComments()
-                            ? $scope.model.deviationComments
-                            : null;
+                        response.deviation_type_id = $scope.model.deviationTypeId;
+                        response.deviation_comments = (
+                          $scope.showDeviationComments() ?
+                          $scope.model.deviationComments :
+                          null
+                        );
                       }
                       $uibModalInstance.close(response);
                     }
                   },
                   cancel: function () {
                     $uibModalInstance.close(null);
-                  }
+                  },
                 });
               },
             ],

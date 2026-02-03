@@ -23,6 +23,11 @@ cenozoApp.defineModule({
           title: "Name",
           column: "deviation_type.name",
         },
+        other: {
+          title: "Other",
+          column: "deviation_type.other",
+          type: "boolean",
+        },
       },
       defaultOrder: {
         column: "deviation_type.type",
@@ -39,6 +44,11 @@ cenozoApp.defineModule({
         title: "Name",
         type: "string",
         format: "identifier",
+      },
+      other: {
+        title: "Other",
+        type: "boolean",
+        help: "Wether to require additional text to be included when this deviation type is selected.",
       },
     });
   },
