@@ -3486,7 +3486,7 @@ class qnaire extends \cenozo\database\record
           else
           {
             $answer = util::json_decode( $answer_list[$column['question_id']] );
-            if( array_key_exists( 'missing_list', $column ) )
+            if( is_null( $answer ) || array_key_exists( 'missing_list', $column ) )
             {
               // leave the row value null
             }
