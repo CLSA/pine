@@ -422,7 +422,7 @@ class expression_manager extends \cenozo\singleton
     $this->active_term = NULL;
 
     if( 'showhidden' == $this->term ) return $this->show_hidden ? 'true' : 'false';
-    if( 'today' == $this->term ) return util::get_datetime_object()->format( 'Y-m-d' );
+    if( 'today' == $this->term ) return sprintf( '"%s"', util::get_datetime_object()->format( 'Y-m-d' ) );
     return $this->term;
   }
 
