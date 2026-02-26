@@ -19,6 +19,7 @@ class equipment_type extends \cenozo\database\equipment_type
     if( is_null( PARENT_INSTANCE_URL ) ) return;
 
     $qnaire_class_name = lib::get_class_name( 'database\qnaire' );
+    $equipment_type_class_name = lib::get_class_name( 'database\equipment_type' );
     $db_site = lib::create( 'business\session' )->get_site();
 
     $qnaire_name_list = [];
@@ -98,15 +99,34 @@ class equipment_type extends \cenozo\database\equipment_type
             '{"table":"equipment","column":"note"}'.
           ']'.
         '}'.
-        '&modifier={"limit":1000000}',
-        util::full_urlencode( $db_equipment_type->name )
+        '&modifier={'.
+          '"join":[{'.
+            '"table":"site",'.
+            '"onleft":"equipment.site_id",'.
+            '"onright":"site.id"'.
+          '}],'.
+          '"where":[{'.
+            '"column":"equipment.active",'.
+            '"operator":"=",'.
+            '"value":true'.
+          '},{'.
+            '"column":"site.name",'.
+            '"operator":"=",'.
+            '"value":"%s"'.
+          '}],'.
+          '"limit":1000000'.
+        '}',
+        util::full_urlencode( $db_equipment_type->name ),
+        util::full_urlencode( $db_site->name )
       );
       $equipment_list = util::get_data_from_parent( 'equipment_type', $url_postfix, $db_qnaire );
 
       // convert the items into a CSV list so we can import them using the above ::import_from_array() method
+      $serial_number_list = [];
       $data = [['active', 'serial_number', 'site', 'note']];
       foreach( $equipment_list as $equipment )
       {
+        $serial_number_list[] = $equipment->serial_number;
         $data[] = [
           $equipment->active,
           $equipment->serial_number,
@@ -117,12 +137,54 @@ class equipment_type extends \cenozo\database\equipment_type
 
       $result = $db_equipment_type->import_from_array( $data, true );
 
+      // now delete any equipment that isn't in the list
+      $removed = 0;
+      if( 0 < count( $serial_number_list ) )
+      {
+        // create a temporary table containing all equipment records we wish to delete
+        $equipment_sel = lib::create( 'database\select' );
+        $equipment_sel->from( 'equipment' );
+        $equipment_sel->add_column( 'id' );
+        $equipment_mod = lib::create( 'database\modifier' );
+        $equipment_mod->where( 'equipment_type_id', '=', $db_equipment_type->id );
+        $equipment_mod->where( 'serial_number', 'NOT IN', $serial_number_list );
+        $equipment_type_class_name::db()->execute( sprintf(
+          'CREATE TEMPORARY TABLE delete_equipment %s %s',
+          $equipment_sel->get_sql(),
+          $equipment_mod->get_sql()
+        ) );
+
+        $temp_equipment_sel = lib::create( 'database\select' );
+        $temp_equipment_sel->from( 'delete_equipment' );
+        $temp_equipment_sel->add_column( 'id' );
+        $in_value = sprintf( '(%s)', $temp_equipment_sel->get_sql() );
+
+        // delete all loan records
+        $delete_mod = lib::create( "database\modifier" );
+        $delete_mod->where( 'equipment_id', 'IN', $in_value, false );
+        $equipment_type_class_name::db()->execute( sprintf(
+          'DELETE FROM equipment_loan %s',
+          $delete_mod->get_sql()
+        ) );
+
+        // delete all equipment records
+        $delete_mod = lib::create( "database\modifier" );
+        $delete_mod->where( 'id', 'IN', $in_value, false );
+        $removed = $equipment_type_class_name::db()->execute( sprintf(
+          'DELETE FROM equipment %s',
+          $delete_mod->get_sql()
+        ) );
+
+        $equipment_type_class_name::db()->execute( 'DROP TABLE delete_equipment' );
+      }
+
       if( 0 < $result->equipment['new'] || 0 < $result->equipment['update'] )
       {
         log::info( sprintf(
-          'Imported %d new and %d updated "%s", equipment records',
+          'Imported %d new, %d updated and %d removed "%s", equipment records',
           $result->equipment['new'],
           $result->equipment['update'],
+          $removed,
           $db_equipment_type->name
         ) );
       }
