@@ -1379,10 +1379,10 @@ cenozo.service("CnModalPreStageFactory", [
         // if the current deviation type isn't in the list then it's from a different type (order vs skip) so don't use it
         if (
           this.deviationTypeId &&
-          null ==
-            this.deviationTypeList.findByProperty("id", this.deviationTypeId)
-        )
+          null == this.deviationTypeList.findByProperty("id", this.deviationTypeId)
+        ) {
           this.deviationTypeId = null;
+        }
       }
 
       angular.extend(this, {
@@ -1401,10 +1401,10 @@ cenozo.service("CnModalPreStageFactory", [
                 angular.extend($scope, {
                   model: self,
                   showDeviationComments: function () {
-                    return $scope.model.deviationTypeList.findByProperty(
-                      "id",
-                      $scope.model.deviationTypeId
-                    ).other;
+                    return (
+                      null != $scope.model.deviationTypeList &&
+                      $scope.model.deviationTypeList.findByProperty("id", $scope.model.deviationTypeId).other
+                    );
                   },
                   checkToken: function () {
                     const element = $scope.form.token;
@@ -1424,14 +1424,16 @@ cenozo.service("CnModalPreStageFactory", [
                     }
                   },
                   canProceed: function () {
-                    const deviationType = $scope.model.deviationTypeList.findByProperty(
-                      "id",
-                      $scope.model.deviationTypeId
+                    const deviationType = (
+                      null != $scope.model.deviationTypeList ?
+                      $scope.model.deviationTypeList.findByProperty("id", $scope.model.deviationTypeId) :
+                      null
                     );
                     return (
-                      $scope.form.$valid &&
-                      deviationType.id &&
-                      (!deviationType.other || $scope.model.deviationComments)
+                      $scope.form.$valid && (
+                        null == $scope.model.deviationTypeList ||
+                        (deviationType.id && (!deviationType.other || $scope.model.deviationComments))
+                      )
                     );
                   },
                   ok: function () {
