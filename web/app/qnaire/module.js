@@ -964,7 +964,7 @@ cenozoApp.defineModule({
                     if(0 < this.confirmData.new_responses) {
                       messages.push(
                         this.confirmData.new_responses + " new response" +
-                        ( 1 == this.confirmData.new_responses ?  " has" : "s have" ) + 
+                        ( 1 == this.confirmData.new_responses ?  " has" : "s have" ) +
                         " been imported"
                       );
                     }
@@ -1059,7 +1059,7 @@ cenozoApp.defineModule({
                     },
                   }).post();
 
-                  let message = 
+                  let message =
                     "You have successfully created " + response.data.success.length + " out of " +
                     this.participantSelection.confirmedCount + ' new recipients for the "' +
                     this.qnaireName + '" questionnaire.';
@@ -1169,16 +1169,16 @@ cenozoApp.defineModule({
 
             onPatch: async function (data) {
               await this.$$onPatch(data);
-              
+
               if (angular.isDefined(data.repeated) && data.repeated) {
                 await this.onView();
               } else if (angular.isDefined(data.readonly) && data.readonly) {
                 this.record.debug = false;
               }
-              
+
               if (
                 angular.isDefined(data.parent_beartooth_url) &&
-                angular.isDefined(data.parent_username) && 
+                angular.isDefined(data.parent_username) &&
                 angular.isDefined(this.respondentModel)
               ){
                 await this.respondentModel.updateUsesParent();

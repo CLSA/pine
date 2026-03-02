@@ -37,7 +37,7 @@ cenozoApp.defineModule({
             return new object(parentModel);
           },
         };
-      },  
-    ]); 
+      },
+    ]);
   },
 });

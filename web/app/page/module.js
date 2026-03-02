@@ -597,6 +597,20 @@ cenozoApp.defineModule({
               });
             },
 
+            changeAllowed: function (question) {
+              return (
+                question.change_allowed ||
+                null == question.value ||
+                isDknaOrRefuse(question.value) || (
+                  "number with unit" == question.type &&
+                  angular.isObject(question.value) && (
+                    [null, undefined].includes(question.value.value) ||
+                    [null, undefined].includes(question.value.unit)
+                  )
+                )
+              );
+            },
+
             outOfSync: async function (description) {
               await CnModalMessageFactory.instance({
                 title: CnTranslationHelper.translate("misc.outOfSync.title", this.currentLanguage),
@@ -901,6 +915,7 @@ cenozoApp.defineModule({
               const self = this;
               const canvas = document.querySelector("#question" + question.id);
               question.sigPad = new SignaturePad(canvas, { backgroundColor: "rgb(240,240,240)" });
+              if (!this.changeAllowed(question)) question.sigPad.off();
 
               question.onSigPadEndStroke = async function(endStroke) {
                 question.objectURL = question.sigPad.toDataURL();
@@ -909,6 +924,7 @@ cenozoApp.defineModule({
                   question.type_filename.replace(/\./, '/')
                 );
                 await self.setAnswer(question, {filesize: question.file.size});
+                if (!self.changeAllowed(question)) question.sigPad.off();
               }
 
               question.sigPad.addEventListener("endStroke", question.onSigPadEndStroke);
@@ -1509,7 +1525,7 @@ cenozoApp.defineModule({
                           "rank",
                           "name",
                           "type",
-                          "mandatory",
+                          "change_allowed",
                           "dkna_allowed",
                           "refuse_allowed",
                           "unit_list",
@@ -2379,6 +2395,8 @@ cenozoApp.defineModule({
 
             setAnswerInProgress: false, // track whether setAnswer is in progress
             setAnswer: async function (question, value, noCompleteCheck) {
+              if (!this.changeAllowed(question)) return;
+
               this.setAnswerInProgress = true;
               if (angular.isUndefined(noCompleteCheck)) noCompleteCheck = false;
 
@@ -2614,6 +2632,8 @@ cenozoApp.defineModule({
               if (!["date", "time"].includes(type)) {
                 throw new Error('Invalid type "' + type + '", must be "date" or "time".');
               }
+
+              if (!this.changeAllowed(question)) return;
 
               try {
                 this.hotKeyDisabled = true;

@@ -5871,7 +5871,7 @@ class qnaire extends \cenozo\database\record
             'name' => $db_question->name,
             'type' => $db_question->type,
             'export' => $db_question->export,
-            'mandatory' => $db_question->mandatory,
+            'change_allowed' => $db_question->change_allowed,
             'dkna_allowed' => $db_question->dkna_allowed,
             'refuse_allowed' => $db_question->refuse_allowed,
             'device_name' => is_null( $db_device ) ? NULL : $db_device->name,
@@ -6506,7 +6506,7 @@ class qnaire extends \cenozo\database\record
           $db_question->name = $question_object->name;
           $db_question->type = $question_object->type;
           $db_question->export = $question_object->export;
-          $db_question->mandatory = $question_object->mandatory;
+          $db_question->change_allowed = $question_object->change_allowed;
           $db_question->dkna_allowed = $question_object->dkna_allowed;
           $db_question->refuse_allowed = $question_object->refuse_allowed;
           if( !is_null( $db_device ) ) $db_question->device_id = $db_device->id;

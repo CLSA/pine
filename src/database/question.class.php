@@ -152,7 +152,7 @@ class question extends base_qnaire_part
   }
 
   /**
-   * Returns an array of details about this question (used by qnaire::get_output_column_list())
+   * Returns an array of details about this question
    * 
    * @param boolean $descriptions If true then include module, page and question descriptions
    * @return array
@@ -194,6 +194,7 @@ class question extends base_qnaire_part
       'lookup' => is_null( $db_lookup ) ? NULL : $db_lookup->name,
       'minimum' => $this->minimum,
       'maximum' => $this->maximum,
+      'change_allowed' => $this->change_allowed,
       'dkna_allowed' => $this->dkna_allowed,
       'refuse_allowed' => $this->refuse_allowed,
       'module_precondition' => $db_module->precondition,
