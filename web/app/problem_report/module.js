@@ -131,7 +131,7 @@ cenozoApp.defineModule({
         CnBaseModelFactory,
         CnProblemReportListFactory,
         CnProblemReportViewFactory
-      ) { 
+      ) {
         var object = function (root) {
           CnBaseModelFactory.construct(this, module);
           this.listModel = CnProblemReportListFactory.instance(this);
@@ -145,7 +145,7 @@ cenozoApp.defineModule({
             return new object(false);
           },
         };
-      },  
-    ]); 
+      },
+    ]);
   },
 });

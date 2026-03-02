@@ -267,9 +267,7 @@ cenozoApp.defineModule({
                       ],
                     },
                   },
-                  onError: async function (error) {
-                    
-                  },
+                  onError: async function (error) {},
                 }).get();
 
                 angular.extend(this, {

@@ -35,6 +35,7 @@ cenozoApp.defineModule({
       },
       type: { title: "Type" },
       export: { title: "Exported", type: "boolean" },
+      change_allowed: { title: "Change Allowed", type: "boolean" },
     });
 
     module.columnList.rank.isIncluded = function ($state, model) {
@@ -58,6 +59,14 @@ cenozoApp.defineModule({
       title: "Export",
       type: "boolean",
       help: "Whether answers to this question are exported.",
+    });
+    module.addInput("", "change_allowed", {
+      title: "Allow Answer to be Changed",
+      type: "boolean",
+      help: "Whether the respondent is allowed to change their answer once it is set.",
+      isExcluded: function ($state, model) {
+        return "comment" == model.viewModel.record.type ? true : "add";
+      },
     });
     module.addInput("", "dkna_allowed", {
       title: "Allow DKNA",

@@ -5,7 +5,6 @@ CREATE PROCEDURE patch_qnaire_report()
 
     SELECT "Adding new title column to qnaire_report table" AS "";
 
-    -- determine the @cenozo database name
     SELECT COUNT(*) INTO @test
     FROM information_schema.COLUMNS
     WHERE table_schema = DATABASE()
@@ -20,7 +19,6 @@ CREATE PROCEDURE patch_qnaire_report()
 
     SELECT "Adding new title column to qnaire_report table" AS "";
 
-    -- determine the @cenozo database name
     SELECT COUNT(*) INTO @test
     FROM information_schema.COLUMNS
     WHERE table_schema = DATABASE()

@@ -5,7 +5,6 @@ CREATE PROCEDURE patch_deviation_type()
 
     SELECT "Adding new other column to deviation_type table" AS "";
 
-    -- determine the @cenozo database name
     SELECT COUNT(*) INTO @test
     FROM information_schema.COLUMNS
     WHERE table_schema = DATABASE()

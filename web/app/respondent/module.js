@@ -625,7 +625,7 @@ cenozoApp.defineModule({
                     'Are you sure you wish to swap the following responses for the <strong>"' +
                     qnaireName + '"</strong> questionnaire?\n' +
                   "</div>" +
-                  "<ul>" + 
+                  "<ul>" +
                     "<li>" + this.typeahead1.formattedValue + "</li>" +
                     "<li>" + this.typeahead2.formattedValue + "</li>" +
                   "</ul>",
