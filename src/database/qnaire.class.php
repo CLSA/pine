@@ -486,7 +486,9 @@ class qnaire extends \cenozo\database\record
       $db_deviation_type = lib::create( 'database\deviation_type' );
       $db_deviation_type->qnaire_id = $this->id;
       $db_deviation_type->type = $source_deviation_type['type'];
+      $db_deviation_type->rank = $source_deviation_type['rank'];
       $db_deviation_type->name = $source_deviation_type['name'];
+      $db_deviation_type->other = $source_deviation_type['other'];
       $db_deviation_type->save();
     }
 
@@ -2404,9 +2406,11 @@ class qnaire extends \cenozo\database\record
 
             $db_response_stage->username = $stage->username;
             $db_response_stage->status = $stage->status;
-            $db_response_stage->deviation_type_id = is_null( $db_deviation_type )
-                                                  ? NULL
-                                                  : $db_deviation_type->id;
+            $db_response_stage->deviation_type_id = (
+              is_null( $db_deviation_type ) ?
+              NULL :
+              $db_deviation_type->id
+            );
             $db_response_stage->deviation_comments = $stage->deviation_comments;
             $db_response_stage->start_datetime = $stage->start_datetime;
             $db_response_stage->end_datetime = $stage->end_datetime;
@@ -3766,7 +3770,7 @@ class qnaire extends \cenozo\database\record
           }
           else
           {
-            // find and add all differences
+            // find and update all differences
             $diff = $db_reminder->process_patch( $reminder, $apply );
             if( !is_null( $diff ) )
             {
@@ -3881,7 +3885,7 @@ class qnaire extends \cenozo\database\record
           }
           else
           {
-            // find and add all differences
+            // find and update all differences
             $diff = $db_device->process_patch( $device, $apply );
             if( !is_null( $diff ) )
             {
@@ -3980,17 +3984,46 @@ class qnaire extends \cenozo\database\record
       {
         // check every item in the patch object for additions and changes
         $add_list = [];
+        $change_list = [];
         foreach( $patch_object->deviation_type_list as $deviation_type )
         {
           $db_deviation_type = $deviation_type_class_name::get_unique_record(
-            ['qnaire_id', 'type', 'name'],
-            [$this->id, $deviation_type->type, $deviation_type->name]
+            ['qnaire_id', 'type', 'rank'],
+            [$this->id, $deviation_type->type, $deviation_type->rank]
           );
+
+          if( is_null( $db_deviation_type ) )
+          {
+            $db_deviation_type = $deviation_type_class_name::get_unique_record(
+              ['qnaire_id', 'type', 'name'],
+              [$this->id, $deviation_type->type, $deviation_type->name]
+            );
+          }
 
           if( is_null( $db_deviation_type ) )
           {
             if( $apply ) $deviation_type_class_name::create_from_object( $deviation_type, $this );
             else $add_list[] = $deviation_type;
+          }
+          else
+          {
+            // find and update all differences
+            $diff = [];
+            foreach( $deviation_type as $property => $value )
+              if( $db_deviation_type->$property != $deviation_type->$property )
+                $diff[$property] = $deviation_type->$property;
+
+            if( 0 < count( $diff ) )
+            {
+              if( $apply )
+              {
+                $db_deviation_type->rank = $deviation_type->rank;
+                $db_deviation_type->name = $deviation_type->name;
+                $db_deviation_type->other = $deviation_type->other;
+                $db_deviation_type->save();
+              }
+              else $change_list[$db_deviation_type->name] = $diff;
+            }
           }
         }
 
@@ -4001,9 +4034,12 @@ class qnaire extends \cenozo\database\record
           $found = false;
           foreach( $patch_object->deviation_type_list as $deviation_type )
           {
-            if( $db_deviation_type->type == $deviation_type->type &&
-                $db_deviation_type->name == $deviation_type->name )
-            {
+            if(
+              $db_deviation_type->type == $deviation_type->type && (
+                $db_deviation_type->rank == $deviation_type->rank ||
+                $db_deviation_type->name == $deviation_type->name
+              )
+            ) {
               $found = true;
               break;
             }
@@ -4022,6 +4058,7 @@ class qnaire extends \cenozo\database\record
 
         $diff_list = [];
         if( 0 < count( $add_list ) ) $diff_list['add'] = $add_list;
+        if( 0 < count( $change_list ) ) $diff_list['change'] = $change_list;
         if( 0 < count( $remove_list ) ) $diff_list['remove'] = $remove_list;
         if( 0 < count( $diff_list ) ) $difference_list['deviation_type_list'] = $diff_list;
       }
@@ -4044,7 +4081,7 @@ class qnaire extends \cenozo\database\record
           }
           else
           {
-            // find and add all differences
+            // find and update all differences
             $diff = [];
             foreach( $attribute as $property => $value )
               if( $db_attribute->$property != $attribute->$property )
@@ -4110,7 +4147,7 @@ class qnaire extends \cenozo\database\record
           }
           else
           {
-            // find and add all differences
+            // find and update all differences
             $diff = [];
             foreach( $qnaire_document as $property => $value )
               if( $db_qnaire_document->$property != $qnaire_document->$property )
@@ -4177,7 +4214,7 @@ class qnaire extends \cenozo\database\record
           }
           else
           {
-            // find and add all differences
+            // find and update all differences
             $diff = [];
             foreach( $embedded_file as $property => $value )
               if( $db_embedded_file->$property != $embedded_file->$property )
@@ -4234,7 +4271,7 @@ class qnaire extends \cenozo\database\record
           $db_language = $language_class_name::get_unique_record( 'code', $qnaire_description->language );
           $db_qnaire_description = $this->get_description( $qnaire_description->type, $db_language );
 
-          // find and add all differences
+          // find and update all differences
           $diff = [];
           foreach( $qnaire_description as $property => $value )
             if( 'language' != $property && $db_qnaire_description->$property != $qnaire_description->$property )
@@ -4306,7 +4343,7 @@ class qnaire extends \cenozo\database\record
           }
           else
           {
-            // find and add all differences
+            // find and update all differences
             $diff = $db_module->process_patch( $module, $name_suffix, $apply );
             if( !is_null( $diff ) )
             {
@@ -4422,7 +4459,7 @@ class qnaire extends \cenozo\database\record
           }
           else
           {
-            // find and add all differences
+            // find and update all differences
             $diff = $db_stage->process_patch( $stage, $name_suffix, $apply );
             if( !is_null( $diff ) )
             {
@@ -4590,7 +4627,7 @@ class qnaire extends \cenozo\database\record
           }
           else
           {
-            // find and add all differences
+            // find and update all differences
             $diff = [];
             foreach( $qnaire_participant_trigger as $property => $value )
               if( 'question_name' != $property &&
@@ -4734,7 +4771,7 @@ class qnaire extends \cenozo\database\record
             }
             else
             {
-              // find and add all differences
+              // find and update all differences
               $diff = [];
               foreach( $qnaire_collection_trigger as $property => $value )
                 if( !in_array( $property, [ 'collection_name', 'question_name' ] ) &&
@@ -4880,7 +4917,7 @@ class qnaire extends \cenozo\database\record
             }
             else
             {
-              // find and add all differences
+              // find and update all differences
               $diff = [];
               foreach( $qnaire_consent_type_trigger as $property => $value )
                 if( !in_array( $property, [ 'consent_type_name', 'question_name' ] ) &&
@@ -5026,7 +5063,7 @@ class qnaire extends \cenozo\database\record
             }
             else
             {
-              // find and add all differences
+              // find and update all differences
               $diff = [];
               foreach( $qnaire_event_type_trigger as $property => $value )
                 if( !in_array( $property, [ 'event_type_name', 'question_name' ] ) &&
@@ -5170,7 +5207,7 @@ class qnaire extends \cenozo\database\record
             }
             else
             {
-              // find and add all differences
+              // find and update all differences
               $diff = [];
               foreach( $qnaire_aconsent_type_trigger as $property => $value )
                 if( !in_array( $property, [ 'alternate_consent_type_name', 'question_name' ] ) &&
@@ -5322,7 +5359,7 @@ class qnaire extends \cenozo\database\record
             }
             else
             {
-              // find and add all differences
+              // find and update all differences
               $diff = [];
               foreach( $qnaire_proxy_type_trigger as $property => $value )
                 if( !in_array( $property, [ 'proxy_type_name', 'question_name' ] ) &&
@@ -5468,7 +5505,7 @@ class qnaire extends \cenozo\database\record
             }
             else
             {
-              // find and add all differences
+              // find and update all differences
               $diff = [];
               foreach( $qnaire_equipment_type_trigger as $property => $value )
                 if( !in_array( $property, [ 'equipment_type_name', 'question_name' ] ) &&
@@ -5766,7 +5803,9 @@ class qnaire extends \cenozo\database\record
 
       $deviation_type_sel = lib::create( 'database\select' );
       $deviation_type_sel->add_column( 'type' );
+      $deviation_type_sel->add_column( 'rank' );
       $deviation_type_sel->add_column( 'name' );
+      $deviation_type_sel->add_column( 'other' );
       foreach( $this->get_deviation_type_list( $deviation_type_sel ) as $item )
         $qnaire_data['deviation_type_list'][] = $item;
     }

@@ -19,6 +19,11 @@ cenozoApp.defineModule({
           title: "Type",
           column: "deviation_type.type",
         },
+        rank: {
+          title: "Rank",
+          column: "deviation_type.rank",
+          type: "rank",
+        },
         name: {
           title: "Name",
           column: "deviation_type.name",
@@ -40,6 +45,11 @@ cenozoApp.defineModule({
         title: "Type",
         type: "enum",
       },
+      rank: {
+        title: "Rank",
+        type: "rank",
+        isExcluded: "add",
+      },
       name: {
         title: "Name",
         type: "string",
@@ -51,5 +61,102 @@ cenozoApp.defineModule({
         help: "Wether to require additional text to be included when this deviation type is selected.",
       },
     });
+
+    /* ############################################################################################## */
+    cenozo.providers.factory("CnDeviationTypeViewFactory", [
+      "CnBaseViewFactory",
+      "$filter",
+      function (CnBaseViewFactory, $filter) {
+        var object = function (parentModel, root) {
+          CnBaseViewFactory.construct(this, parentModel, root);
+
+          this.onView = async function (force) {
+            await this.$$onView(force);
+
+            // TODO: get max rank
+            // get the max rank for all deviation types
+            const max = this.parentModel.metadata.columnList.type.enumList.findByProperty(
+              "name",
+              this.record.type
+            ).maxRank;
+            this.parentModel.metadata.columnList.rank.enumList = []; 
+            if (null !== max) {
+              for ( var rank = 1; rank <= max; rank++) {
+                this.parentModel.metadata.columnList.rank.enumList.push({
+                  value: rank, 
+                  name: $filter("cnOrdinal")(rank),
+                });
+              }
+            }
+          };
+        };
+        return {
+          instance: function (parentModel, root) {
+            return new object(parentModel, root);
+          },
+        };
+      },
+    ]);
+
+    /* ############################################################################################## */
+    cenozo.providers.factory("CnDeviationTypeModelFactory", [
+      "CnBaseModelFactory",
+      "CnDeviationTypeAddFactory",
+      "CnDeviationTypeListFactory",
+      "CnDeviationTypeViewFactory",
+      "CnHttpFactory",
+      "CnSession",
+      function (
+        CnBaseModelFactory,
+        CnDeviationTypeAddFactory,
+        CnDeviationTypeListFactory,
+        CnDeviationTypeViewFactory,
+        CnHttpFactory,
+        CnSession
+      ) {  
+        var object = function (root) {
+          CnBaseModelFactory.construct(this, module);
+          angular.extend(this, {
+            addModel: CnDeviationTypeAddFactory.instance(this),
+            listModel: CnDeviationTypeListFactory.instance(this),
+            viewModel: CnDeviationTypeViewFactory.instance(this, root),
+
+            getMetadata: async function() {
+              await this.$$getMetadata();
+
+              this.metadata.columnList.type.enumList.forEach(async obj => {
+                const response = await CnHttpFactory.instance({
+                  path: this.getServiceCollectionPath(),
+                  data: {
+                    select: {
+                      column: ["type", {
+                        column: "MAX(deviation_type.rank)",
+                        alias: "max",
+                        table_prefix: false,
+                      }],
+                    },
+                    modifier: {
+                      where: {
+                        column: "type",
+                        operator: "=",
+                        value: obj.name
+                      },
+                    },
+                  },
+                }).get();
+                obj.maxRank = Number(response.data[0].max);
+              });
+            },
+          });
+        };
+
+        return {
+          root: new object(true),
+          instance: function () {
+            return new object(false);
+          },
+        };
+      },
+    ]);
   },
 });
