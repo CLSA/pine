@@ -27,12 +27,13 @@ class post extends \cenozo\service\post
     $db_qnaire = $this->get_parent_record();
     
     $select = lib::create( 'database\select' );
-    $select->add_column( 'MAX(deviation_type.rank)', 'max_rank', false );
+    $select->add_column( 'rank' );
     $modifier = lib::create( 'database\modifier' );
-    $modifier->join( 'deviation_type', 'qnaire.id', 'deviation_type.qnaire_id' );
     $modifier->where( 'type', '=', $db_deviation_type->type );
-    $row = $db_qnaire->select( $select, $modifier );
+    $modifier->order_desc( 'rank' );
+    $modifier->limit(1);
+    $list = $db_qnaire->get_deviation_type_list( $select, $modifier );
 
-    $db_deviation_type->rank = $row ? $row[0]['max_rank'] + 1 : 1;
+    $db_deviation_type->rank = 0 == count( $list ) ? 1 : $list[0]['rank'] + 1;
   }
 }

@@ -19,7 +19,7 @@ class deviation_type extends \cenozo\database\has_rank
    * @access protected
    * @static
    */
-  protected static $rank_parent = 'qnaire';
+  protected static $rank_parent = ['qnaire', 'type'];
 
   /**
    * Creates a deviation_type from an object
