@@ -83,6 +83,9 @@ class ui extends \cenozo\ui\ui
           return parent::get_error_interface( $error );
         }
       }
+
+      // add the Permissions-Policy header so that microphones can be used by Chrome
+      header( 'Permissions-Policy: microphone=(self)' );
     }
     catch( \cenozo\exception\notice $e )
     {
