@@ -1305,7 +1305,7 @@ cenozoApp.defineModule({
                         getDeviation: function () {
                           return self.responseStageList
                             .filter((rs) => rs.rank < responseStage.rank)
-                            .some((rs) => ["ready", "paused"].includes(rs.status)) ?
+                            .some((rs) => "ready" == rs.status) ?
                             "order" : null;
                         },
                       });
