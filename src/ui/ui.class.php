@@ -21,6 +21,9 @@ class ui extends \cenozo\ui\ui
   {
     $session = lib::create( 'business\session' );
 
+    // add the Permissions-Policy header so that microphones can be used by Chrome
+    header( 'Permissions-Policy: microphone=(self)' );
+
     // If we're loading the qnaire run then show a special interface if we're logged in as the qnaire user
     try
     {
@@ -83,9 +86,6 @@ class ui extends \cenozo\ui\ui
           return parent::get_error_interface( $error );
         }
       }
-
-      // add the Permissions-Policy header so that microphones can be used by Chrome
-      header( 'Permissions-Policy: microphone=(self)' );
     }
     catch( \cenozo\exception\notice $e )
     {
@@ -317,7 +317,7 @@ class ui extends \cenozo\ui\ui
 
     // don't show the user overview to respondents
     if( 'interviewer' == $db_role->name ) unset( $list['User Overview'] );
-    
+
     return $list;
   }
 
