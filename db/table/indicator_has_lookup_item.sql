@@ -16,4 +16,6 @@ CREATE TABLE indicator_has_lookup_item (
     REFERENCES pine.lookup_item (id)
     ON DELETE CASCADE
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_general_ci;

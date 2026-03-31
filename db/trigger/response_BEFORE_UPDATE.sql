@@ -1,6 +1,6 @@
 CREATE TRIGGER response_BEFORE_UPDATE
 BEFORE UPDATE ON pine.response FOR EACH ROW
-BEING
+BEGIN
   IF NEW.page_id <=> OLD.page_id THEN
     SELECT IF( module.id IS NULL, 0, COUNT(*) ) + response_page.rank INTO @pages
     FROM response
@@ -10,3 +10,7 @@ BEING
     LEFT JOIN module AS module ON respondent.qnaire_id = module.qnaire_id and module.rank < response_module.rank
     LEFT JOIN page AS page ON module.id = page.module_id
     WHERE response.id = NEW.id;
+
+    SET NEW.current_page_rank = @pages;
+  END IF;
+END$$

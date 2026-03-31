@@ -2,7 +2,7 @@ CREATE TRIGGER response_AFTER_INSERT
 AFTER INSERT ON pine.response FOR EACH ROW
 BEGIN
   CALL update_respondent_current_response( NEW.respondent_id );
-  
+
   SELECT qnaire_id INTO @qnaire_id FROM respondent WHERE id = NEW.respondent_id;
   SELECT stages INTO @stages FROM qnaire WHERE id = @qnaire_id;
   IF @stages THEN

@@ -16,4 +16,5 @@ CREATE TABLE respondent_current_response (
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4;
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_general_ci;

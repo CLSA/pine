@@ -21,4 +21,6 @@ CREATE TABLE qnaire_report (
     REFERENCES cenozo.language (id)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_general_ci;

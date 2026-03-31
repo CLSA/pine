@@ -16,4 +16,6 @@ CREATE TABLE role_has_custom_report (
     REFERENCES cenozo.role (id)
     ON DELETE CASCADE
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_general_ci;
