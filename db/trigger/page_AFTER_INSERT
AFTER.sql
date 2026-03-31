@@ -1,0 +1,4 @@
+CREATE TRIGGER page_AFTER_INSERT
+AFTER INSERT ON pine.page FOR EACH ROW
+BEGIN
+  INSERT INTO page_average_time SET page_id = NEW.id;

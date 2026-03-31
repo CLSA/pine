@@ -1,0 +1,22 @@
+CREATE TABLE page (
+  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
+  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  module_id INT(10) UNSIGNED NOT NULL,
+  rank INT(10) UNSIGNED NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  max_time INT(10) UNSIGNED NOT NULL,
+  precondition TEXT NULL DEFAULT NULL,
+  tabulate TINYINT(1) NOT NULL DEFAULT 0,
+  note TEXT NULL DEFAULT NULL,
+  PRIMARY KEY (id),
+  UNIQUE INDEX uq_module_id_rank (module_id ASC, rank ASC),
+  UNIQUE INDEX uq_module_id_name (module_id ASC, name ASC),
+  INDEX fk_module_id (module_id ASC),
+  CONSTRAINT fk_page_module_id
+    FOREIGN KEY (module_id)
+    REFERENCES pine.module (id)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4;

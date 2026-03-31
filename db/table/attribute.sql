@@ -1,0 +1,18 @@
+CREATE TABLE attribute (
+  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
+  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  qnaire_id INT(10) UNSIGNED NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  code VARCHAR(255) NOT NULL,
+  note TEXT NULL DEFAULT NULL,
+  PRIMARY KEY (id),
+  UNIQUE INDEX uq_qnaire_id_name (qnaire_id ASC, name ASC),
+  INDEX fk_qnaire_id (qnaire_id ASC),
+  CONSTRAINT fk_attribute_qnaire_id
+    FOREIGN KEY (qnaire_id)
+    REFERENCES pine.qnaire (id)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4;

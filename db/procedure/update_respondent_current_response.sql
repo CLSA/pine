@@ -1,0 +1,13 @@
+CREATE PROCEDURE update_respondent_current_response (IN proc_respondent_id INT(10) UNSIGNED)
+BEGIN
+  REPLACE INTO respondent_current_response(respondent_id, response_id)
+  SELECT respondent.id, response.id
+  FROM respondent
+  LEFT JOIN response ON respondent.id = response.respondent_id
+  AND response.rank <=> (
+    SELECT MAX(rank)
+    FROM response
+    WHERE respondent.id = response.respondent_id
+  )
+  WHERE respondent.id = proc_respondent_id;
+END$$
