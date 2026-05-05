@@ -118,9 +118,22 @@ class response_stage extends \cenozo\database\record
       $this->page_id = $db_page->id;
 
       // if we're re-launching the stage then remove the end datetime
-      if( 'completed' == $this->status ) $this->end_datetime = NULL;
-      // otherwise we're launching for the first time so set the start datetime
-      else $this->start_datetime = util::get_datetime_object();
+      if( 'completed' == $this->status )
+      {
+        // first add a pause between the current end_datetime and now so that time isn't counted in the duration
+        $db_response_stage_pause = lib::create( 'database\response_stage_pause' );
+        $db_response_stage_pause->response_stage_id = $this->id;
+        $db_response_stage_pause->username = lib::create( 'business\session' )->get_effective_user()->name;
+        $db_response_stage_pause->start_datetime = clone $this->end_datetime;
+        $db_response_stage_pause->end_datetime = util::get_datetime_object();
+        $db_response_stage_pause->save();
+
+        $this->end_datetime = NULL;
+      }
+      else // otherwise we're launching for the first time so set the start datetime
+      {
+        $this->start_datetime = util::get_datetime_object();
+      }
 
       $this->save();
     }
