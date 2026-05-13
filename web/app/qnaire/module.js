@@ -264,13 +264,13 @@ cenozoApp.defineModule({
 
     module.addInputGroup("Repeated Questionnaires", {
       repeated: {
-        title: "Repeated",
+        title: "Repeated (not supported)",
         type: "enum",
         isExcluded: function ($state, model) {
-          return model.isRole("interviewer");
+          return "add" == model.getActionFromState() || model.isRole("interviewer");
         },
         isConstant: function ($state, model) {
-          return model.viewModel.record.readonly;
+          return true; // model.viewModel.record.readonly;
         },
       },
       repeat_offset: {
@@ -278,10 +278,10 @@ cenozoApp.defineModule({
         type: "string",
         format: "integer",
         isConstant: function ($state, model) {
-          return model.viewModel.record.readonly;
+          return true; // model.viewModel.record.readonly;
         },
         isExcluded: function ($state, model) {
-          return model.isRole("interviewer")
+          return "add" == model.getActionFromState() || model.isRole("interviewer")
             ? true
             : !model.viewModel.record.repeated;
         },
@@ -291,10 +291,10 @@ cenozoApp.defineModule({
         type: "string",
         format: "integer",
         isConstant: function ($state, model) {
-          return model.viewModel.record.readonly;
+          return true; // model.viewModel.record.readonly;
         },
         isExcluded: function ($state, model) {
-          return model.isRole("interviewer")
+          return "add" == model.getActionFromState() || model.isRole("interviewer")
             ? true
             : !model.viewModel.record.repeated;
         },
