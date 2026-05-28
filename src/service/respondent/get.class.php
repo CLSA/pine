@@ -30,24 +30,8 @@ class get extends \cenozo\service\get
       $db_qnaire = $db_respondent->get_qnaire();
       $this->db_response = $db_respondent->get_current_response( true );
 
-      // always set the show hidden property as it may have changed since the response record was created
-      $this->db_response->show_hidden = $this->get_argument( 'show_hidden', false );
-      $this->db_response->save();
-
       if( !is_null( $db_qnaire->repeated ) )
       {
-        // TODO: need to re-implement the following code
-        throw lib::create( 'exception\notice',
-          'Repeated questionnaires are currently dissabled. '.
-          'Please contact the development team to re-enable this feature.',
-          __METHOD__
-        );
-
-        /*
-        // NOTE: Since this was disabled the code above (creating the response record, setting show_hidden)
-        //       has changed so the commented out block may no longer be valid
-
-        $response_class_name = lib::get_class_name( 'database\response' );
         $respondent_mail_class_name = lib::get_class_name( 'database\respondent_mail' );
 
         // create all missing responses based on the repeat type and when the invitation went out
@@ -56,9 +40,12 @@ class get extends \cenozo\service\get
           array( $db_respondent->id, NULL, 1 )
         );
 
-        $diff = is_null( $db_respondent_mail )
-              ? $db_respondent->start_datetime->diff( util::get_datetime_object() )
-              : $db_respondent_mail->get_mail()->schedule_datetime->diff( util::get_datetime_object() );
+        $now = util::get_datetime_object();
+        $diff = (
+          is_null( $db_respondent_mail ) ?
+          $db_respondent->start_datetime->diff( $now ) :
+          $db_respondent_mail->get_mail()->schedule_datetime->diff( $now )
+        );
 
         $count = 0;
         if( 'hour' == $db_qnaire->repeated ) $count = 24*$diff->days + $diff->h;
@@ -70,14 +57,30 @@ class get extends \cenozo\service\get
         $total_responses = floor( $count / $db_qnaire->repeat_offset ) + 1;
         if( $total_responses > $db_qnaire->max_responses ) $total_responses = $db_qnaire->max_responses;
 
-        for( $rank = $this->db_response->rank + 1; $rank <= $total_responses; $rank++ )
+        $db_response = NULL;
+        try
         {
-          $db_response = lib::create( 'database\response' );
-          $db_response->respondent_id = $db_respondent->id;
-          $db_response->save();
+          for( $rank = $this->db_response->rank + 1; $rank <= $total_responses; $rank++ )
+          {
+            $db_response = lib::create( 'database\response' );
+            $db_response->respondent_id = $db_respondent->id;
+            $db_response->save();
+          }
         }
-        */
+        catch( \cenozo\exception\base_exception $e )
+        {
+          // release the semaphore before re-throwing the exception
+          $semaphore->release();
+          throw $e;
+        }
+
+        // the last created response is the new effective current response
+        if( !is_null( $db_response ) ) $this->db_response = $db_response;
       }
+
+      // always set the show hidden property as it may have changed since the response record was created
+      $this->db_response->show_hidden = $this->get_argument( 'show_hidden', false );
+      $this->db_response->save();
 
       $semaphore->release();
     }

@@ -275,12 +275,10 @@ class respondent extends \cenozo\database\record
       $db_current_response->start_datetime
     );
 
-    // filled in the first block and used by the second
-    $respondent_invitation_mail_list = array();
-
     if( $db_qnaire->email_invitation )
     {
-      // create an invitation for all iterations of the questionnaire;
+      // create an invitation and all reminders for all iterations of the questionnaire
+      $reminder_list = $db_qnaire->get_reminder_object_list();
       $mail_list = array();
       $past_due_count = 0;
       for( $rank = $lowest_rank; $rank <= $number_of_iterations; $rank++ )
@@ -298,49 +296,22 @@ class respondent extends \cenozo\database\record
         }
 
         $mail_list[] = array( 'rank' => $rank, 'datetime' => $datetime );
-        if( $datetime < $now ) $past_due_count++;
-      }
-
-      // make sure there is a maximum of one mail in the past (avoid double-emailing passed emails)
-      for( $i = 0; $i < ( $past_due_count-1 ); $i++ ) array_shift( $mail_list );
-
-      foreach( $mail_list as $mail )
-        $respondent_invitation_mail_list[$mail['rank']] = $this->add_mail( NULL, $mail['rank'], $mail['datetime'] );
-    }
-
-    foreach( $db_qnaire->get_reminder_object_list() as $db_reminder )
-    {
-      // create a reminder for all iterations of the questionnaire;
-      for( $rank = $lowest_rank; $rank <= $number_of_iterations; $rank++ )
-      {
-        $db_respondent_mail = $respondent_invitation_mail_list[$rank];
-
-        if( !is_null( $db_respondent_mail ) )
+        if( $datetime >= $now )
         {
-          $datetime = clone (
-            array_key_exists( $rank, $respondent_invitation_mail_list ) ?
-            $respondent_invitation_mail_list[$rank]->get_mail()->schedule_datetime :
-            $base_datetime
-          );
+          $db_respondent_mail = $this->add_mail( NULL, $rank, $datetime );
 
-          $datetime->add( new \DateInterval( sprintf(
-            'P%s%d%s',
-            'hour' == $db_reminder->delay_unit ? 'T' : '',
-            $db_reminder->delay_offset,
-            strtoupper( substr( $db_reminder->delay_unit, 0, 1 ) )
-          ) ) );
-
-          if( 1 < $rank )
-          { // add repeated span for iterations beyond the first
-            $datetime->add( new \DateInterval( sprintf(
+          // now add reminders
+          foreach( $reminder_list as $db_reminder )
+          {
+            $reminder_datetime = clone $db_respondent_mail->get_mail()->schedule_datetime;
+            $reminder_datetime->add( new \DateInterval( sprintf(
               'P%s%d%s',
-              'hour' == $db_qnaire->repeated ? 'T' : '',
-              $db_qnaire->repeat_offset * ( $rank - 1 ),
-              strtoupper( substr( $db_qnaire->repeated, 0, 1 ) )
+              'hour' == $db_reminder->delay_unit ? 'T' : '',
+              $db_reminder->delay_offset,
+              strtoupper( substr( $db_reminder->delay_unit, 0, 1 ) )
             ) ) );
+            if( $reminder_datetime >= $now ) $this->add_mail( $db_reminder, $rank, $reminder_datetime );
           }
-
-          if( $datetime >= $now ) $this->add_mail( $db_reminder, $rank, $datetime );
         }
       }
     }

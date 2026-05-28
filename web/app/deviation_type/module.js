@@ -73,7 +73,6 @@ cenozoApp.defineModule({
           this.onView = async function (force) {
             await this.$$onView(force);
 
-            // TODO: get max rank
             // get the max rank for all deviation types
             const max = this.parentModel.metadata.columnList.type.enumList.findByProperty(
               "name",
