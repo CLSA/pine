@@ -299,18 +299,20 @@ class respondent extends \cenozo\database\record
         if( $datetime >= $now )
         {
           $db_respondent_mail = $this->add_mail( NULL, $rank, $datetime );
-
-          // now add reminders
-          foreach( $reminder_list as $db_reminder )
+          if( !is_null( $db_respondent_mail ) )
           {
-            $reminder_datetime = clone $db_respondent_mail->get_mail()->schedule_datetime;
-            $reminder_datetime->add( new \DateInterval( sprintf(
-              'P%s%d%s',
-              'hour' == $db_reminder->delay_unit ? 'T' : '',
-              $db_reminder->delay_offset,
-              strtoupper( substr( $db_reminder->delay_unit, 0, 1 ) )
-            ) ) );
-            if( $reminder_datetime >= $now ) $this->add_mail( $db_reminder, $rank, $reminder_datetime );
+            // now add reminders
+            foreach( $reminder_list as $db_reminder )
+            {
+              $reminder_datetime = clone $db_respondent_mail->get_mail()->schedule_datetime;
+              $reminder_datetime->add( new \DateInterval( sprintf(
+                'P%s%d%s',
+                'hour' == $db_reminder->delay_unit ? 'T' : '',
+                $db_reminder->delay_offset,
+                strtoupper( substr( $db_reminder->delay_unit, 0, 1 ) )
+              ) ) );
+              if( $reminder_datetime >= $now ) $this->add_mail( $db_reminder, $rank, $reminder_datetime );
+            }
           }
         }
       }

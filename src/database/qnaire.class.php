@@ -6903,24 +6903,14 @@ class qnaire extends \cenozo\database\record
       $db_response->save();
     }
 
-    // swap all respondent mail
-    $respondent_mail_list_1 = $db_respondent1->get_respondent_mail_object_list();
-    $respondent_mail_list_2 = $db_respondent2->get_respondent_mail_object_list();
-    foreach( $respondent_mail_list_1 as $db_respondent_mail )
+    // delete all respondent mail
+    foreach( $db_respondent1->get_respondent_mail_object_list() as $db_respondent_mail )
     {
-      $db_respondent_mail->respondent_id = $db_respondent2->id;
-      $db_respondent_mail->rank = $db_respondent_mail->rank + 1000000; // to avoid conflicts
-      $db_respondent_mail->save();
+      $db_respondent_mail->delete();
     }
-    foreach( $respondent_mail_list_2 as $db_respondent_mail )
+    foreach( $db_respondent2->get_respondent_mail_object_list() as $db_respondent_mail )
     {
-      $db_respondent_mail->respondent_id = $db_respondent1->id;
-      $db_respondent_mail->save();
-    }
-    foreach( $respondent_mail_list_1 as $db_respondent_mail )
-    {
-      $db_respondent_mail->rank = $db_respondent_mail->rank - 1000000; // put back the correct rank
-      $db_respondent_mail->save();
+      $db_respondent_mail->delete();
     }
 
     // update the current response for both respondents

@@ -1,6 +1,6 @@
 cenozoApp.defineModule({
   name: "response",
-  models: ["add", "list", "view"],
+  models: ["list", "view"],
   defaultTab: "attribute",
   create: (module) => {
     angular.extend(module, {
@@ -402,31 +402,33 @@ cenozoApp.defineModule({
       ) {
         var object = function (root) {
           CnBaseModelFactory.construct(this, module);
-          this.displayModel = CnResponseDisplayFactory.instance(this);
-          this.listModel = CnResponseListFactory.instance(this);
-          this.viewModel = CnResponseViewFactory.instance(this, root);
+          angular.extend(this, {
+            displayModel: CnResponseDisplayFactory.instance(this),
+            listModel: CnResponseListFactory.instance(this),
+            viewModel: CnResponseViewFactory.instance(this, root),
+            getAddEnabled: function () { return false; },
+            getMetadata: async function () {
+              await this.$$getMetadata();
 
-          this.getMetadata = async function () {
-            await this.$$getMetadata();
-
-            var response = await CnHttpFactory.instance({
-              path: "language",
-              data: {
-                select: { column: ["id", "name"] },
-                modifier: {
-                  where: { column: "active", operator: "=", value: true },
-                  order: "name",
-                  limit: 1000,
+              var response = await CnHttpFactory.instance({
+                path: "language",
+                data: {
+                  select: { column: ["id", "name"] },
+                  modifier: {
+                    where: { column: "active", operator: "=", value: true },
+                    order: "name",
+                    limit: 1000,
+                  },
                 },
-              },
-            }).query();
+              }).query();
 
-            this.metadata.columnList.language_id.enumList =
-              response.data.reduce((list, item) => {
-                list.push({ value: item.id, name: item.name });
-                return list;
-              }, []);
-          };
+              this.metadata.columnList.language_id.enumList =
+                response.data.reduce((list, item) => {
+                  list.push({ value: item.id, name: item.name });
+                  return list;
+                }, []);
+            },
+          });
         };
 
         return {
