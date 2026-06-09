@@ -321,8 +321,9 @@ class respondent extends \cenozo\database\record
 
   /**
    * Removes all unsent invitations and reminders for this respondent
+   * @param integer $rank Which response rank to remove (default NULL meaning all ranks)
    */
-  public function remove_unsent_mail()
+  public function remove_unsent_mail( $rank = NULL )
   {
     // we don't send mail to anonymous respondents
     if( is_null( $this->participant_id ) ) return;
@@ -331,6 +332,7 @@ class respondent extends \cenozo\database\record
     $modifier = lib::create( 'database\modifier' );
     $modifier->join( 'mail', 'respondent_mail.mail_id', 'mail.id' );
     $modifier->where( 'mail.sent_datetime', '=', NULL );
+    if( !is_null( $rank ) ) $modifier->where( 'respondent_mail.rank', '=', $rank );
     $respondent_mail_list = $this->get_respondent_mail_object_list( $modifier );
 
     // now delete the mail which is no longer needed

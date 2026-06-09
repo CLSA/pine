@@ -194,8 +194,8 @@ class response extends \cenozo\database\has_rank
 
       if( !is_null( $db_participant ) )
       {
-        // when submitting the response check if the respondent is done and remove any unsent mail
-        $db_respondent->remove_unsent_mail();
+        // when submitting the response remove any unsent respondent mail (for this response only)
+        $db_respondent->remove_unsent_mail( $this->rank );
 
         // execute all qnaire triggers
         foreach( $db_qnaire->get_qnaire_participant_trigger_object_list() as $db_trigger )
