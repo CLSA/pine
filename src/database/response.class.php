@@ -743,7 +743,7 @@ class response extends \cenozo\database\has_rank
       if( preg_match( $re, $report_data['code'], $matches ) )
       {
         $args = [];
-        foreach( explode( ', ', $matches[1] ) as $arg ) $args[] = trim( $arg );
+        foreach( preg_split( '/ *, */', $matches[1] ) as $arg ) $args[] = trim( $arg );
         if( 6 != count( $args ) )
         {
           log::error( sprintf(
@@ -764,6 +764,7 @@ class response extends \cenozo\database\has_rank
         {
           log::error( sprintf(
             'Report data "%s" contains question "%s" which does not exist.',
+            $report_data['code'],
             $question_name
           ) );
           continue;
@@ -1292,6 +1293,10 @@ class response extends \cenozo\database\has_rank
         else if( 'start_date' == $respondent_property )
         {
           $compiled = is_null( $this->start_datetime ) ? '' : $this->start_datetime->format( 'Y-m-d' );
+        }
+        else if( 'end_date' == $respondent_property )
+        {
+          $compiled = is_null( $this->last_datetime ) ? '' : $this->last_datetime->format( 'Y-m-d' );
         }
         else
         {

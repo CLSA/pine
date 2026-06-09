@@ -153,6 +153,7 @@ class expression_manager extends \cenozo\singleton
    *   $respondent.interview_type$ (will be empty if there is no special interview_type)
    *   $respondent.language$ (gets the current language code)
    *   $respondent.start_date$ (gets the date the response was launched in YYYY-MM-DD format)
+   *   $respondent.end_date$ (gets the date the response was last updated in YYYY-MM-DD format)
    *   $respondent.isAlternateType(type) (true if the respondent is an alternate of the given type)
    *   showhidden true if showing hidden elements (launched by phone) false if not (launched by web)
    *   current_year The current year in YYYY format
@@ -624,7 +625,7 @@ class expression_manager extends \cenozo\singleton
 
   /**
    * Processes the current term as a respondent variable
-   * @param string $variable The selected respondent variable (token, interview_type, language, start_date)
+   * @param string $variable The selected respondent variable (token, interview_type, language, etc...)
    * @return string
    */
   private function process_respondent_value( $variable )
@@ -667,6 +668,12 @@ class expression_manager extends \cenozo\singleton
       $compiled = is_null( $this->db_response ) || is_null( $this->db_reponse->start_datetime )
                 ? ''
                 : $this->db_response->start_datetime->format( 'YYYY-MM-DD' ) ;
+    }
+    else if( 'end_date' == $variable )
+    {
+      $compiled = is_null( $this->db_response ) || is_null( $this->db_reponse->last_datetime )
+                ? ''
+                : $this->db_response->last_datetime->format( 'YYYY-MM-DD' ) ;
     }
     else
     {
