@@ -1,5 +1,4 @@
-CREATE TRIGGER qnaire_has_language_AFTER_INSERT
-AFTER INSERT ON pine.qnaire_has_language FOR EACH ROW
+CREATE TRIGGER qnaire_has_language_AFTER_INSERT AFTER INSERT ON qnaire_has_language FOR EACH ROW
 BEGIN
   INSERT IGNORE INTO qnaire_description( qnaire_id, language_id, type ) VALUES
   ( NEW.qnaire_id, NEW.language_id, 'introduction' ),
@@ -41,4 +40,4 @@ BEGIN
   JOIN page ON question.page_id = page.id
   JOIN module ON page.module_id = module.id
   WHERE module.qnaire_id = NEW.qnaire_id;
-END$$
+END ;;

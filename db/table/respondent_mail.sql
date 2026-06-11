@@ -1,16 +1,17 @@
 CREATE TABLE respondent_mail (
-  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  respondent_id INT(10) UNSIGNED NOT NULL,
-  mail_id INT(10) UNSIGNED NOT NULL,
-  rank INT(10) UNSIGNED NOT NULL,
-  reminder_id INT(10) UNSIGNED NULL DEFAULT NULL,
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  respondent_id int(10) unsigned NOT NULL,
+  mail_id int(10) unsigned NOT NULL,
+  rank int(10) unsigned NOT NULL,
+  reminder_id int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (id),
-  UNIQUE INDEX uq_respondent_id_reminder_id_rank (respondent_id ASC, reminder_id ASC, rank ASC),
-  INDEX fk_respondent_id (respondent_id ASC),
-  INDEX fk_mail_id (mail_id ASC),
-  INDEX fk_reminder_id (reminder_id ASC),
+  UNIQUE KEY uq_respondent_id_reminder_id_rank (respondent_id,reminder_id,rank),
+  KEY fk_respondent_id (respondent_id),
+  KEY fk_mail_id (mail_id),
+  KEY fk_reminder_id (reminder_id),
   CONSTRAINT fk_respondent_mail_mail_id
     FOREIGN KEY (mail_id)
     REFERENCES cenozo.mail (id)
@@ -18,14 +19,12 @@ CREATE TABLE respondent_mail (
     ON UPDATE NO ACTION,
   CONSTRAINT fk_respondent_mail_reminder_id
     FOREIGN KEY (reminder_id)
-    REFERENCES pine.reminder (id)
+    REFERENCES reminder (id)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT fk_respondent_mail_respondent_id
     FOREIGN KEY (respondent_id)
-    REFERENCES pine.respondent (id)
+    REFERENCES respondent (id)
     ON DELETE CASCADE
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

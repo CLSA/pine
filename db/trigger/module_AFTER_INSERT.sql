@@ -1,5 +1,4 @@
-CREATE TRIGGER module_AFTER_INSERT
-AFTER INSERT ON pine.module FOR EACH ROW
+CREATE TRIGGER module_AFTER_INSERT AFTER INSERT ON module FOR EACH ROW
 BEGIN
   INSERT INTO module_average_time SET module_id = NEW.id;
 
@@ -12,14 +11,15 @@ BEGIN
   IF @stages THEN
     SELECT COUNT(*) INTO @total FROM stage WHERE qnaire_id = NEW.qnaire_id;
     IF 0 = @total THEN
+
       INSERT INTO stage
       SET qnaire_id = NEW.qnaire_id, first_module_id = NEW.id, last_module_id = NEW.id, rank = 1, name = "default";
     ELSEIF 1 = NEW.rank THEN
+
       SELECT id INTO @next_module_id FROM module WHERE qnaire_id = NEW.qnaire_id AND rank = 2;
-      UPDATE stage SET first_module_id = NEW.id
-      WHERE qnaire_id = NEW.qnaire_id
-      AND first_module_id = @next_module_id;
+      UPDATE stage SET first_module_id = NEW.id WHERE qnaire_id = NEW.qnaire_id AND first_module_id = @next_module_id;
     ELSE
+
       SELECT stage.id INTO @stage_id
       FROM stage
       JOIN module ON stage.last_module_id = module.id
@@ -30,4 +30,4 @@ BEGIN
       END IF;
     END IF;
   END IF;
-END$$
+END ;;

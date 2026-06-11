@@ -1,16 +1,17 @@
 CREATE TABLE qnaire_proxy_type_trigger (
-  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  qnaire_id INT(10) UNSIGNED NOT NULL,
-  proxy_type_id INT(10) UNSIGNED NULL DEFAULT NULL,
-  question_id INT(10) UNSIGNED NOT NULL,
-  answer_value VARCHAR(255) NOT NULL,
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  qnaire_id int(10) unsigned NOT NULL,
+  proxy_type_id int(10) unsigned DEFAULT NULL,
+  question_id int(10) unsigned NOT NULL,
+  answer_value varchar(255) NOT NULL,
   PRIMARY KEY (id),
-  INDEX fk_qnaire_id (qnaire_id ASC),
-  INDEX fk_proxy_type_id (proxy_type_id ASC),
-  INDEX fk_question_id (question_id ASC),
-  UNIQUE INDEX uq_qnaire_id_proxy_type_id_question_id_answer_value (qnaire_id ASC, proxy_type_id ASC, question_id ASC, answer_value ASC),
+  UNIQUE KEY uq_qnaire_id_proxy_type_id_question_id_answer_value (qnaire_id,proxy_type_id,question_id,answer_value),
+  KEY fk_qnaire_id (qnaire_id),
+  KEY fk_proxy_type_id (proxy_type_id),
+  KEY fk_question_id (question_id),
   CONSTRAINT fk_qnaire_proxy_type_trigger_proxy_type_id
     FOREIGN KEY (proxy_type_id)
     REFERENCES cenozo.proxy_type (id)
@@ -18,14 +19,12 @@ CREATE TABLE qnaire_proxy_type_trigger (
     ON UPDATE NO ACTION,
   CONSTRAINT fk_qnaire_proxy_type_trigger_qnaire_id
     FOREIGN KEY (qnaire_id)
-    REFERENCES pine.qnaire (id)
+    REFERENCES qnaire (id)
     ON DELETE CASCADE
     ON UPDATE NO ACTION,
   CONSTRAINT fk_qnaire_proxy_type_trigger_question_id
     FOREIGN KEY (question_id)
-    REFERENCES pine.question (id)
+    REFERENCES question (id)
     ON DELETE CASCADE
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

@@ -1,17 +1,16 @@
 CREATE TABLE reminder (
-  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  qnaire_id INT(10) UNSIGNED NOT NULL,
-  delay_offset INT(10) UNSIGNED NOT NULL,
-  delay_unit ENUM('hour', 'day', 'week', 'month') NOT NULL,
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  qnaire_id int(10) unsigned NOT NULL,
+  delay_offset int(10) unsigned NOT NULL,
+  delay_unit enum('hour','day','week','month') NOT NULL,
   PRIMARY KEY (id),
-  INDEX fk_qnaire_id (qnaire_id ASC),
+  KEY fk_qnaire_id (qnaire_id),
   CONSTRAINT fk_reminder_qnaire_id
     FOREIGN KEY (qnaire_id)
-    REFERENCES pine.qnaire (id)
+    REFERENCES qnaire (id)
     ON DELETE CASCADE
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

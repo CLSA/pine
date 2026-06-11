@@ -1,18 +1,17 @@
 CREATE TABLE response_stage_pause (
-  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  response_stage_id INT(10) UNSIGNED NOT NULL,
-  username VARCHAR(45) NOT NULL,
-  start_datetime DATETIME NOT NULL,
-  end_datetime DATETIME NULL DEFAULT NULL,
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  response_stage_id int(10) unsigned NOT NULL,
+  username varchar(45) NOT NULL,
+  start_datetime datetime NOT NULL,
+  end_datetime datetime DEFAULT NULL,
   PRIMARY KEY (id),
-  INDEX fk_response_stage_id (response_stage_id ASC),
+  KEY fk_response_stage_id (response_stage_id),
   CONSTRAINT fk_response_stage_pause_response_stage_id
     FOREIGN KEY (response_stage_id)
-    REFERENCES pine.response_stage (id)
+    REFERENCES response_stage (id)
     ON DELETE CASCADE
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

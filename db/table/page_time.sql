@@ -1,26 +1,25 @@
 CREATE TABLE page_time (
-  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  response_id INT(10) UNSIGNED NOT NULL,
-  page_id INT(10) UNSIGNED NOT NULL,
-  datetime DATETIME NULL DEFAULT NULL,
-  microtime DOUBLE UNSIGNED NULL DEFAULT NULL,
-  time DOUBLE UNSIGNED NOT NULL DEFAULT 0,
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  response_id int(10) unsigned NOT NULL,
+  page_id int(10) unsigned NOT NULL,
+  datetime datetime DEFAULT NULL,
+  microtime double unsigned DEFAULT NULL,
+  time double unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (id),
-  UNIQUE INDEX uq_response_id_page_id (response_id ASC, page_id ASC),
-  INDEX fk_response_id (response_id ASC),
-  INDEX fk_page_id (page_id ASC),
+  UNIQUE KEY uq_response_id_page_id (response_id,page_id),
+  KEY fk_response_id (response_id),
+  KEY fk_page_id (page_id),
   CONSTRAINT fk_page_time_page_id
     FOREIGN KEY (page_id)
-    REFERENCES pine.page (id)
+    REFERENCES page (id)
     ON DELETE CASCADE
     ON UPDATE NO ACTION,
   CONSTRAINT fk_page_time_response_id
     FOREIGN KEY (response_id)
-    REFERENCES pine.response (id)
+    REFERENCES response (id)
     ON DELETE CASCADE
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

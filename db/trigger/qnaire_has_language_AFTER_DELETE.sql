@@ -1,5 +1,4 @@
-CREATE TRIGGER qnaire_has_language_AFTER_DELETE
-AFTER DELETE ON pine.qnaire_has_language FOR EACH ROW
+CREATE TRIGGER qnaire_has_language_AFTER_DELETE AFTER DELETE ON qnaire_has_language FOR EACH ROW
 BEGIN
   DELETE FROM qnaire_description
   WHERE language_id = OLD.language_id
@@ -50,4 +49,4 @@ BEGIN
     JOIN module ON page.module_id = module.id
     WHERE module.qnaire_id = OLD.qnaire_id
   ) AS t );
-END$$
+END ;;

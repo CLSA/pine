@@ -1,18 +1,17 @@
 CREATE TABLE device_data (
-  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  device_id INT(10) UNSIGNED NOT NULL,
-  name VARCHAR(45) NOT NULL,
-  code VARCHAR(255) NOT NULL,
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  device_id int(10) unsigned NOT NULL,
+  name varchar(45) NOT NULL,
+  code varchar(255) NOT NULL,
   PRIMARY KEY (id),
-  INDEX fk_device_id (device_id ASC),
-  UNIQUE INDEX uq_device_id_name (device_id ASC, name ASC),
+  UNIQUE KEY uq_device_id_name (device_id,name),
+  KEY fk_device_id (device_id),
   CONSTRAINT fk_device_data_device_id
     FOREIGN KEY (device_id)
-    REFERENCES pine.device (id)
+    REFERENCES device (id)
     ON DELETE CASCADE
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

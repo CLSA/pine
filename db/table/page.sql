@@ -1,23 +1,22 @@
 CREATE TABLE page (
-  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  module_id INT(10) UNSIGNED NOT NULL,
-  rank INT(10) UNSIGNED NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  max_time INT(10) UNSIGNED NOT NULL,
-  precondition TEXT NULL DEFAULT NULL,
-  tabulate TINYINT(1) NOT NULL DEFAULT 0,
-  note TEXT NULL DEFAULT NULL,
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  module_id int(10) unsigned NOT NULL,
+  rank int(10) unsigned NOT NULL,
+  name varchar(255) NOT NULL,
+  max_time int(10) unsigned NOT NULL,
+  precondition text DEFAULT NULL,
+  tabulate tinyint(1) NOT NULL DEFAULT 0,
+  note text DEFAULT NULL,
   PRIMARY KEY (id),
-  UNIQUE INDEX uq_module_id_rank (module_id ASC, rank ASC),
-  UNIQUE INDEX uq_module_id_name (module_id ASC, name ASC),
-  INDEX fk_module_id (module_id ASC),
+  UNIQUE KEY uq_module_id_rank (module_id,rank),
+  UNIQUE KEY uq_module_id_name (module_id,name),
+  KEY fk_module_id (module_id),
   CONSTRAINT fk_page_module_id
     FOREIGN KEY (module_id)
-    REFERENCES pine.module (id)
+    REFERENCES module (id)
     ON DELETE CASCADE
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

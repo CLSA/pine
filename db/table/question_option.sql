@@ -1,26 +1,25 @@
 CREATE TABLE question_option (
-  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  question_id INT(10) UNSIGNED NOT NULL,
-  rank INT(10) UNSIGNED NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  exclusive TINYINT(1) NOT NULL DEFAULT 0,
-  extra ENUM('date', 'number', 'number with unit', 'string', 'text', 'time') NULL DEFAULT NULL,
-  multiple_answers TINYINT(1) NOT NULL DEFAULT 0,
-  unit_list TEXT NULL DEFAULT NULL,
-  minimum VARCHAR(255) NULL DEFAULT NULL,
-  maximum VARCHAR(255) NULL DEFAULT NULL,
-  precondition TEXT NULL DEFAULT NULL,
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  question_id int(10) unsigned NOT NULL,
+  rank int(10) unsigned NOT NULL,
+  name varchar(255) NOT NULL,
+  exclusive tinyint(1) NOT NULL DEFAULT 0,
+  extra enum('date','number','number with unit','string','text','time') DEFAULT NULL,
+  multiple_answers tinyint(1) NOT NULL DEFAULT 0,
+  unit_list text DEFAULT NULL CHECK (json_valid(unit_list)),
+  minimum varchar(1023) DEFAULT NULL,
+  maximum varchar(1023) DEFAULT NULL,
+  precondition text DEFAULT NULL,
   PRIMARY KEY (id),
-  UNIQUE INDEX uq_question_id_rank (question_id ASC, rank ASC),
-  UNIQUE INDEX uq_question_id_name (question_id ASC, name ASC),
-  INDEX fk_question_id (question_id ASC),
+  UNIQUE KEY uq_question_id_rank (question_id,rank),
+  UNIQUE KEY uq_question_id_name (question_id,name),
+  KEY fk_question_id (question_id),
   CONSTRAINT fk_question_option_question_id
     FOREIGN KEY (question_id)
-    REFERENCES pine.question (id)
+    REFERENCES question (id)
     ON DELETE CASCADE
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

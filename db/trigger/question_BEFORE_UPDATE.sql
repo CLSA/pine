@@ -1,5 +1,4 @@
-CREATE TRIGGER question_BEFORE_UPDATE
-BEFORE UPDATE ON pine.question FOR EACH ROW
+CREATE TRIGGER question_BEFORE_UPDATE BEFORE UPDATE ON question FOR EACH ROW
 BEGIN
   SELECT NEW.name RLIKE "^[a-z0-9_]+$" INTO @test;
   IF( @test = 0 ) THEN
@@ -49,4 +48,4 @@ BEGIN
       SET NEW.unit_list = NULL;
     END IF;
   END IF;
-END$$
+END ;;

@@ -1,5 +1,4 @@
-CREATE TRIGGER question_AFTER_UPDATE
-AFTER UPDATE ON question FOR EACH ROW
+CREATE TRIGGER question_AFTER_UPDATE AFTER UPDATE ON question FOR EACH ROW
 BEGIN
   IF NEW.device_id IS NULL AND OLD.device_id IS NOT NULL THEN
     DELETE FROM answer_device
@@ -10,4 +9,4 @@ BEGIN
     INSERT IGNORE INTO answer_device( answer_id )
     SELECT id FROM answer WHERE question_id = NEW.id;
   END IF;
-END$$
+END ;;

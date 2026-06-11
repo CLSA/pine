@@ -1,5 +1,6 @@
 CREATE TRIGGER page_AFTER_INSERT
-AFTER INSERT ON pine.page FOR EACH ROW
+AFTER INSERT ON page
+FOR EACH ROW
 BEGIN
   INSERT INTO page_average_time SET page_id = NEW.id;
 
@@ -18,4 +19,5 @@ BEGIN
   WHERE qnaire.id = @qnaire_id;
 
   UPDATE qnaire SET total_pages = @pages WHERE id = @qnaire_id;
-END$$
+
+END ;;

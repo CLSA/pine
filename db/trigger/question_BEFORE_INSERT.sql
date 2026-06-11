@@ -1,5 +1,4 @@
-CREATE TRIGGER question_BEFORE_INSERT
-BEFORE INSERT ON pine.question FOR EACH ROW
+CREATE TRIGGER question_BEFORE_INSERT BEFORE INSERT ON question FOR EACH ROW
 BEGIN
   SELECT NEW.name RLIKE "^[a-z0-9_]+$" INTO @test;
   IF( @test = 0 ) THEN
@@ -35,4 +34,4 @@ BEGIN
       END IF;
     END IF;
   END IF;
-END$$
+END ;;
