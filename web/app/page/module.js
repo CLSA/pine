@@ -1733,8 +1733,8 @@ cenozoApp.defineModule({
                         );
                         question.objectURL = window.URL.createObjectURL(question.file);
 
-                        // Note: this could be a problem since it isn't event driven (is 100ms enough time?)
-                        $timeout(() => { this.showSigPad(question); }, 100);
+                        // Note: this could be a problem since it isn't event driven (is 500ms enough time?)
+                        $timeout(() => { this.showSigPad(question); }, 500);
                       }
                     }
                     return list;
