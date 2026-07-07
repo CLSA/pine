@@ -1362,7 +1362,9 @@ class response extends \cenozo\database\has_rank
       $data = (new JSONPath( $value ))->find( sprintf( '$.%s', $object_path ) )->getData();
       if( !is_array( $data ) || 0 == count( $data ) )
       {
-        log::warning( sprintf( 'Tried to get device data using invalid path "%s".', $object_path ) );
+        // this can get noisy, so only show warning when the qnaire is in debug mode
+        if( $this->get_qnaire()->debug )
+          log::warning( sprintf( 'Tried to get device data using invalid path "%s".', $object_path ) );
       }
       else
       {
