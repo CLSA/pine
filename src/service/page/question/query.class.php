@@ -102,7 +102,7 @@ class query extends \cenozo\service\query
           $db_answer = lib::create( 'database\answer', $record['answer_id'] );
           $record['files_received'] = count( $db_answer->get_data_files() );
         }
-        else if( in_array( $record['type'], ['audio', 'signature'] ) )
+        else if( in_array( $record['type'], ['audio (ogg)', 'audio (wav)', 'signature'] ) )
         {
           // audio and signature files are stored on disk, not in the database
           $db_answer = lib::create( 'database\answer', $record['answer_id'] );

@@ -497,7 +497,7 @@ class answer extends \cenozo\database\record
     $question_class_name = lib::get_class_name( 'database\question' );
 
     $type = $this->get_question()->type;
-    if( !in_array( $type, ['audio', 'signature'] ) ) return NULL;
+    if( !in_array( $type, ['audio (ogg)', 'audio (wav)', 'signature'] ) ) return NULL;
 
     $src = NULL;
     $b64 = $this->get_base64_encoded_file();
@@ -521,7 +521,7 @@ class answer extends \cenozo\database\record
   public function get_data_html_element()
   {
     $type = $this->get_question()->type;
-    if( !in_array( $type, ['audio', 'signature'] ) ) return NULL;
+    if( !in_array( $type, ['audio (ogg)', 'audio (wav)', 'signature'] ) ) return NULL;
 
     $html_element = NULL;
     $src = $this->get_data_src();
@@ -570,7 +570,8 @@ class answer extends \cenozo\database\record
    * @const array
    */
   const TYPE_FILENAME = [
-    'audio' => 'audio.wav',
+    'audio (ogg)' => 'audio.ogg',
+    'audio (wav)' => 'audio.wav',
     'signature' => 'image.png',
   ];
 }

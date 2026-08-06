@@ -1249,8 +1249,10 @@ class response extends \cenozo\database\has_rank
               $compiled = $value ? 'Yes' : 'No';
             }
           }
-          else if( in_array( $db_question->type, ['audio', 'signature'] ) && !is_null( $db_answer ) )
-          {
+          else if(
+            in_array( $db_question->type, ['audio (ogg)', 'audio (wav)', 'signature'] ) &&
+            !is_null( $db_answer )
+          ) {
             $compiled = $db_answer->get_data_html_element();
           }
           else if( 'device' == $db_question->type )

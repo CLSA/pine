@@ -292,15 +292,15 @@ cenozoApp.defineModule({
                     page.question_list.forEach( question => {
                       if("list" == question.type) {
                         question.isString = angular.isString(question.answer);
-                      } else if (["audio", "signature"].includes(question.type)) {
+                      } else if (["audio (ogg)", "audio (wav)", "signature"].includes(question.type)) {
                         // if the audio/signature answer is valid then setup the question.answer property
                         if (!angular.isString(question.answer) && null != question.file) {
                           question.answer = (
-                            "audio" == question.type ? (
+                            "signature" == question.type ? (
+                              '<img class="full-width" src="' + question.file + '"></img>'
+                            ) : (
                               '<audio controls class="full-width" style="height: 40px;" src="' +
                               question.file + '"></audio>'
-                            ) : (
-                              '<img class="full-width" src="' + question.file + '"></img>'
                             )
                           );
 

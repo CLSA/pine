@@ -1100,7 +1100,7 @@ class qnaire extends \cenozo\database\record
       $modifier = lib::create( 'database\modifier' );
       $modifier->join( 'page', 'module.id', 'page.module_id' );
       $modifier->join( 'question', 'page.id', 'question.page_id' );
-      $modifier->where( 'question.type', 'IN', ['audio', 'signature'] );
+      $modifier->where( 'question.type', 'IN', ['audio (ogg)', 'audio (wav)', 'signature'] );
       foreach( $this->get_module_list( $select, $modifier ) as $row )
       {
         $data_question_list[] = $row['name'];
@@ -1534,7 +1534,8 @@ class qnaire extends \cenozo\database\record
     {
       // null values are valid for all types
       if( 'null' == $value ) return true;
-      else if( 'audio' == $type ) return 'YES' == $value;
+      else if( 'audio (ogg)' == $type ) return 'YES' == $value;
+      else if( 'audio (wav)' == $type ) return 'YES' == $value;
       else if( 'date' == $type ) return preg_match( '/^[0-9]{4}-[0-1][0-9]-[0-3][0-9]$/', $value );
       else if( 'device' == $type ) return true;
       else if( 'equipment' == $type ) return true;
@@ -3542,7 +3543,7 @@ class qnaire extends \cenozo\database\record
             }
             else // the question can only have one answer
             {
-              if( in_array( $column['type'], ['audio', 'boolean', 'signature'] ) )
+              if( in_array( $column['type'], ['audio (ogg)', 'audio (wav)', 'boolean', 'signature'] ) )
               {
                 // convert audio/boolean/signature values to YES and NO
                 $row_value = $answer ? 'YES' : 'NO';

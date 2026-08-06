@@ -335,7 +335,8 @@ cenozoApp.defineModule({
       "CnSession",
       "CnHttpFactory",
       "CnTranslationHelper",
-      "CnAudioRecordingFactory",
+      "CnOggAudioRecordingFactory",
+      "CnWavAudioRecordingFactory",
       "CnParticipantModelFactory",
       "CnAddressModelFactory",
       "$window",
@@ -353,7 +354,8 @@ cenozoApp.defineModule({
         CnSession,
         CnHttpFactory,
         CnTranslationHelper,
-        CnAudioRecordingFactory,
+        CnOggAudioRecordingFactory,
+        CnWavAudioRecordingFactory,
         CnParticipantModelFactory,
         CnAddressModelFactory,
         $window,
@@ -1665,9 +1667,9 @@ cenozoApp.defineModule({
                           });
                         })()
                       );
-                    } else if ("audio" == question.type) {
+                    } else if (["audio (ogg)", "audio (wav)"].includes(question.type)) {
                       // setup the audio recording for this question
-                      question.audio = CnAudioRecordingFactory.instance({
+                      const audioParams = {
                         timeLimit: 0 < question.maximum ? 1000*question.maximum : 60000,
                         onComplete: (blob) => {
                           question.file = blob;
@@ -1685,7 +1687,14 @@ cenozoApp.defineModule({
                             message: this.text("misc.maxRecordingTimeMessage"),
                           }).show();
                         },
-                      });
+                      };
+
+                      // use the correct encoding type (ogg or wav)
+                      question.audio = (
+                        "audio (ogg)" == question.type ?
+                        CnOggAudioRecordingFactory.instance(audioParams) :
+                        CnWavAudioRecordingFactory.instance(audioParams)
+                      );
 
                       question.objectURL = null;
                       if (null != question.file) {
@@ -1754,11 +1763,12 @@ cenozoApp.defineModule({
                   this.convertValueToModel(question);
 
                   // convert audio maximum times
-                  if ('audio' == question.type) {
-                    question.maximumAsTime =
+                  if (["audio (ogg)", "audio (wav)"].includes(question.type)) {
+                    question.maximumAsTime = (
                       question.maximum ?
                       moment.utc(question.maximum*1000).format("mm:ss") :
-                      null;
+                      null
+                    );
                   }
 
                   // start listening for changes to device status (only applies to in progress devices)
@@ -2461,7 +2471,7 @@ cenozoApp.defineModule({
                     // communicate with the server (if we're working with a respondent)
                     const self = this;
 
-                    if (["audio", "signature"].includes(question.type)) {
+                    if (["audio (ogg)", "audio (wav)", "signature"].includes(question.type)) {
                       if (!angular.isObject(value) || !angular.isDefined(value.filesize)) {
                         // if the file's size isn't provided then delete the file
                         question.file = '';
@@ -2477,7 +2487,11 @@ cenozoApp.defineModule({
                       await CnHttpFactory.instance({
                         path: "answer/" + question.answer_id + "?filename=" + question.type_filename,
                         data: question.file,
-                        format: "audio" == question.type ? "wav" : "png",
+                        format: (
+                          "audio (ogg)" == question.type ?  "ogg" :
+                          "audio (wav)" == question.type ?  "wav" :
+                          "png"
+                        ),
                         onError: function (error) {
                           if (409 == error.status) self.outOfSync(JSON.parse(error.data));
                           else {
