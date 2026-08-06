@@ -529,9 +529,9 @@ class answer extends \cenozo\database\record
     {
       // send as a base64 encoded string for the element's src attribute
       $html_element = sprintf(
-        'audio' == $type ?
-          '<audio controls class="full-width" style="height: 40px;" src="%s"></audio>' :
-          '<img class="full-width src="%s"></img>',
+        'signature' == $type ?
+          '<img class="full-width src="%s"></img>' :
+          '<audio controls class="full-width" style="height: 40px;" src="%s"></audio>',
         $src
       );
     }
