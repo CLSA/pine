@@ -6,7 +6,7 @@ CREATE TABLE question (
   page_id int(10) unsigned NOT NULL,
   rank int(10) unsigned NOT NULL,
   name varchar(255) NOT NULL,
-  type enum('audio','boolean','comment','date','device','equipment','list','lookup','number','number with unit','signature','string','text','time') NOT NULL,
+  type enum('audio (ogg)','audio (wav)','boolean','comment','date','device','equipment','list','lookup','number','number with unit','signature','string','text','time') NOT NULL,
   export tinyint(1) NOT NULL DEFAULT 1,
   change_allowed tinyint(1) NOT NULL DEFAULT 1,
   dkna_allowed tinyint(1) NOT NULL DEFAULT 1,

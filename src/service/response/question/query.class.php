@@ -195,7 +195,7 @@ class query extends \cenozo\service\query
                   'answer' => is_null( $print_answer ) ? NULL : $print_answer
                 );
 
-                if( in_array( $question['type'], ['audio', 'signature'] ) )
+                if( in_array( $question['type'], ['audio (ogg)', 'audio (wav)', 'signature'] ) )
                 {
                   // audio and signature files are stored on disk, not in the database
                   $db_answer = lib::create( 'database\answer', $question['answer_id'] );

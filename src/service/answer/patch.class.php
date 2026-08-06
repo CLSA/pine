@@ -21,28 +21,31 @@ class patch extends \cenozo\service\patch
     // if the object has no user_id and there's a referring user then use it
     $patch_object = parent::get_file_as_object();
 
-    if( !property_exists( $patch_object, 'user_id' ) )
+    if( !is_null( $patch_object ) )
     {
-      $db_referring_user = lib::create( 'business\session' )->get_referring_user();
-      if( !is_null( $db_referring_user ) ) $patch_object->user_id = $db_referring_user->id;
-    }
+      if( !property_exists( $patch_object, 'user_id' ) )
+      {
+        $db_referring_user = lib::create( 'business\session' )->get_referring_user();
+        if( !is_null( $db_referring_user ) ) $patch_object->user_id = $db_referring_user->id;
+      }
 
-    if( !property_exists( $patch_object, 'alternate_id' ) )
-    {
-      $db_referring_alternate = lib::create( 'business\session' )->get_referring_alternate();
-      if( !is_null( $db_referring_alternate ) ) $patch_object->alternate_id = $db_referring_alternate->id;
-    }
+      if( !property_exists( $patch_object, 'alternate_id' ) )
+      {
+        $db_referring_alternate = lib::create( 'business\session' )->get_referring_alternate();
+        if( !is_null( $db_referring_alternate ) ) $patch_object->alternate_id = $db_referring_alternate->id;
+      }
 
-    if( property_exists( $patch_object, 'language' ) )
-    {
-      $db_language = $language_class_name::get_unique_record( 'code', $patch_object->language );
-      unset( $patch_object->language );
-      if( !is_null( $db_language ) ) $patch_object->language_id = $db_language->id;
-    }
+      if( property_exists( $patch_object, 'language' ) )
+      {
+        $db_language = $language_class_name::get_unique_record( 'code', $patch_object->language );
+        unset( $patch_object->language );
+        if( !is_null( $db_language ) ) $patch_object->language_id = $db_language->id;
+      }
 
-    if( property_exists( $patch_object, 'value' ) && is_object( $patch_object->value ) )
-    {
-      $patch_object->value = util::json_encode( $patch_object->value );
+      if( property_exists( $patch_object, 'value' ) && is_object( $patch_object->value ) )
+      {
+        $patch_object->value = util::json_encode( $patch_object->value );
+      }
     }
 
     return $patch_object;

@@ -131,7 +131,7 @@ cenozoApp.defineModule({
       title: "Maximum",
       type: "string",
       isExcluded: function ($state, model) {
-        return !["audio", "date", "number", "number with unit", "string", "text"].includes(
+        return !["audio (ogg)", "audio (wav)", "date", "number", "number with unit", "string", "text"].includes(
           model.viewModel.record.type
         )
           ? true

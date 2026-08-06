@@ -10,8 +10,9 @@
           <strong
             ng-if="!['comment','device','list'].includes( question.type )"
             ng-style="
-              ['audio', 'signature'].includes(question.type) ?
-                null : { 'padding': '0 4px', 'outline': 'black solid 1px' }
+              ['audio (ogg)', 'audio (wav)', 'signature'].includes(question.type) ?
+              null :
+              { 'padding': '0 4px', 'outline': 'black solid 1px' }
             "
             ng-bind-html="null === question.answer ? '(empty)' : question.answer"
           ></strong>
