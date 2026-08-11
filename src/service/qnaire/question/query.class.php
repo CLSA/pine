@@ -29,6 +29,7 @@ class query extends \cenozo\service\query
     $question_class_name = lib::get_class_name( 'database\question' );
     $modifier = clone $this->modifier;
     $modifier->where( 'qnaire.id', '=', $this->get_parent_record()->id );
+    $this->select->apply_aliases_to_modifier( $modifier );
     return $question_class_name::count( $modifier );
   }
 
@@ -46,6 +47,7 @@ class query extends \cenozo\service\query
       $modifier->order( 'page.rank' );
       $modifier->order( 'question.rank' );
     }
+    $this->select->apply_aliases_to_modifier( $modifier );
     return $question_class_name::select( $this->select, $modifier );
   }
 }

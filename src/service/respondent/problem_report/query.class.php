@@ -34,6 +34,7 @@ class query extends \cenozo\service\query
       $problem_report_class_name = lib::get_class_name( 'database\problem_report' );
       $modifier = clone $this->modifier;
       $modifier->where( 'response_id', '=', $this->get_parent_record()->get_current_response()->id );
+      $this->select->apply_aliases_to_modifier( $modifier );
       $count = $problem_report_class_name::count( $modifier );
     }
 
@@ -54,6 +55,7 @@ class query extends \cenozo\service\query
       $problem_report_class_name = lib::get_class_name( 'database\problem_report' );
       $modifier = clone $this->modifier;
       $modifier->where( 'response_id', '=', $this->get_parent_record()->get_current_response()->id );
+      $this->select->apply_aliases_to_modifier( $modifier );
       $list = $problem_report_class_name::select( $this->select, $modifier );
     }
 

@@ -32,9 +32,9 @@ class query extends \cenozo\service\query
     $modifier = clone $this->modifier;
     $modifier->join( 'answer', 'answer_device.answer_id', 'answer.id', '', NULL, true );
     $modifier->where( 'answer.response_id', '=', $db_response->id );
-    $count = $answer_device_class_name::count( $modifier );
+    $this->select->apply_aliases_to_modifier( $modifier );
 
-    return $count;
+    return $answer_device_class_name::count( $modifier );
   }
 
   /**
@@ -49,8 +49,8 @@ class query extends \cenozo\service\query
     $modifier = clone $this->modifier;
     $modifier->join( 'answer', 'answer_device.answer_id', 'answer.id', '', NULL, true );
     $modifier->where( 'answer.response_id', '=', $db_response->id );
-    $list = $answer_device_class_name::select( $this->select, $modifier );
+    $this->select->apply_aliases_to_modifier( $modifier );
 
-    return $list;
+    return $answer_device_class_name::select( $this->select, $modifier );
   }
 }

@@ -34,6 +34,7 @@ class query extends \cenozo\service\query
       $response_attribute_class_name = lib::get_class_name( 'database\response_attribute' );
       $modifier = clone $this->modifier;
       $modifier->where( 'response_id', '=', $this->get_parent_record()->get_current_response()->id );
+      $this->select->apply_aliases_to_modifier( $modifier );
       $count = $response_attribute_class_name::count( $modifier );
     }
 
@@ -54,6 +55,7 @@ class query extends \cenozo\service\query
       $response_attribute_class_name = lib::get_class_name( 'database\response_attribute' );
       $modifier = clone $this->modifier;
       $modifier->where( 'response_id', '=', $this->get_parent_record()->get_current_response()->id );
+      $this->select->apply_aliases_to_modifier( $modifier );
       $list = $response_attribute_class_name::select( $this->select, $modifier );
     }
 
