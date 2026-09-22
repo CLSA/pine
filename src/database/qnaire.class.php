@@ -5913,6 +5913,7 @@ class qnaire extends \cenozo\database\record
             'device_name' => is_null( $db_device ) ? NULL : $db_device->name,
             'equipment_type_name' => is_null( $db_equipment_type ) ? NULL : $db_equipment_type->name,
             'lookup_name' => is_null( $db_lookup ) ? NULL : $db_lookup->name,
+            'number_is_float' => $db_question->number_is_float,
             'unit_list' => $db_question->unit_list,
             'minimum' => $db_question->minimum,
             'maximum' => $db_question->maximum,
@@ -6024,6 +6025,7 @@ class qnaire extends \cenozo\database\record
               'exclusive' => $db_question_option->exclusive,
               'extra' => $db_question_option->extra,
               'multiple_answers' => $db_question_option->multiple_answers,
+              'number_is_float' => $db_question_option->number_is_float,
               'unit_list' => $db_question_option->unit_list,
               'minimum' => $db_question_option->minimum,
               'maximum' => $db_question_option->maximum,
@@ -6548,8 +6550,8 @@ class qnaire extends \cenozo\database\record
           if( !is_null( $db_device ) ) $db_question->device_id = $db_device->id;
           if( !is_null( $db_equipment_type ) ) $db_question->equipment_type_id = $db_equipment_type->id;
           if( !is_null( $db_lookup ) ) $db_question->lookup_id = $db_lookup->id;
-          $db_question->unit_list = $question_object->unit_list;
           $db_question->number_is_float = $question_object->number_is_float;
+          $db_question->unit_list = $question_object->unit_list;
           $db_question->minimum = $question_object->minimum;
           $db_question->maximum = $question_object->maximum;
           $db_question->default_answer = $question_object->default_answer;
@@ -6576,8 +6578,8 @@ class qnaire extends \cenozo\database\record
               $db_question_option->exclusive = $question_option_object->exclusive;
               $db_question_option->extra = $question_option_object->extra;
               $db_question_option->multiple_answers = $question_option_object->multiple_answers;
-              $db_question_option->unit_list = $question_option_object->unit_list;
               $db_question_option->number_is_float = $question_option_object->number_is_float;
+              $db_question_option->unit_list = $question_option_object->unit_list;
               $db_question_option->minimum = $question_option_object->minimum;
               $db_question_option->maximum = $question_option_object->maximum;
               $db_question_option->precondition = $question_option_object->precondition;
