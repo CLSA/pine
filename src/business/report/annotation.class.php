@@ -279,15 +279,16 @@ class annotation extends \cenozo\business\report\base_report
           {
             // single-selection question options with an extra type are represented by their own column
             if( 'date' == $question['extra'] ) $row['valueType'] = 'date';
-            else if( 'number' == $question['extra'] ) $row['valueType'] = 'decimal';
-            else if( 'number with unit' == $question['extra'] )
+            else if( 'float' == $question['extra'] ) $row['valueType'] = 'decimal';
+            else if( 'int' == $question['extra'] ) $row['valueType'] = 'integer';
+            else if( preg_match( '/ with unit$/', $question['extra'] ) )
             {
               // there will be two questions, one for the number and a second for the unit
               // the unit question will have a unit list, the number question will not
               if( !array_key_exists( 'unit_list', $question ) )
               {
                 // this is the number question, so we just have to set the type
-                $row['valueType'] = 'decimal';
+                $row['valueType'] = 'float with unit' == $question['extra'] ? 'decimal' : 'integer';
               }
             }
           }
@@ -318,15 +319,10 @@ class annotation extends \cenozo\business\report\base_report
       }
       else // this is not a missing, boolean or list column
       {
-        if( 'date' == $question['type'] )
-        {
-          $row['valueType'] = 'date';
-        }
-        else if( 'number' == $question['type'] )
-        {
-          $row['valueType'] = 'decimal';
-        }
-        else if( 'number with unit' == $question['type'] )
+        if( 'date' == $question['type'] ) $row['valueType'] = 'date';
+        else if( 'float' == $question['type'] ) $row['valueType'] = 'decimal';
+        else if( 'int' == $question['type'] ) $row['valueType'] = 'integer';
+        else if( preg_match( '/ with unit$/', $question['type'] ) )
         {
           // there will be two questions, one for the number and a second for the unit
           // the unit question will have a unit list, the number question will not
@@ -334,6 +330,7 @@ class annotation extends \cenozo\business\report\base_report
           {
             // this is the number question, so we just have to set the type
             $row['valueType'] = 'decimal';
+            $row['valueType'] = 'float with unit' == $question['type'] ? 'decimal' : 'integer';
           }
         }
         // all remaining types (equipment, lookup, string, text) are treated as strings (nothing to change)

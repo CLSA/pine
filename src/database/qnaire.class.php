@@ -1539,10 +1539,10 @@ class qnaire extends \cenozo\database\record
       else if( 'date' == $type ) return preg_match( '/^[0-9]{4}-[0-1][0-9]-[0-3][0-9]$/', $value );
       else if( 'device' == $type ) return true;
       else if( 'equipment' == $type ) return true;
+      else if( 'float' == $type ) return util::string_matches_float( $value );
+      else if( 'int' == $type ) return util::string_matches_int( $value );
       else if( 'list' == $type ) return true;
       else if( 'lookup' == $type ) return true;
-      else if( 'number' == $type ) return util::string_matches_float( $value );
-      else if( 'number with unit' == $type ) return util::string_matches_float( $value );
       else if( 'signature' == $type ) return 'YES' == $value;
       else if( 'string' == $type ) return true;
       else if( 'text' == $type ) return true;
@@ -1551,11 +1551,9 @@ class qnaire extends \cenozo\database\record
       return false;
     }
 
-    // a private function to convert a json value to a number
-    function convert_to_number( $value )
-    {
-      return util::string_matches_float( $value ) ? (float) $value : $value;
-    }
+    // private functions to convert a json values to a floats or ints
+    function convert_to_float( $value ) { return util::string_matches_float( $value ) ? (float) $value : $value; }
+    function convert_to_int( $value ) { return util::string_matches_int( $value ) ? (int) $value : $value; }
 
     $identifier_class_name = lib::get_class_name( 'database\identifier' );
     $participant_class_name = lib::get_class_name( 'database\participant' );
@@ -1903,8 +1901,13 @@ class qnaire extends \cenozo\database\record
               }
 
               // this unit belongs to a "number with unit" question
+              preg_match( '/ with type$/', $question['type'], $matches );
               $new_value = (object) [
-                'value' => convert_to_number( $temp_value ),
+                'value' => (
+                  'float with type' == $question['type'] ?
+                  convert_to_float( $temp_value ) :
+                  convert_to_int( $temp_value )
+                ),
                 'unit' => $unit
               ];
             }
@@ -2030,14 +2033,14 @@ class qnaire extends \cenozo\database\record
                 $new_value = util::json_decode( $db_answer->value );
                 if( !is_array( $new_value ) ) $new_value = [];
 
-                $obj = [
-                  'id' => $question['option_id'],
-                  'value' => 'number with unit' == $question['extra'] ?
-                    (object) ['value' => convert_to_number( $value ), 'unit' => NULL] :
-                    $value
-                ];
-                // look for this id as an integer in the array and replace it with an object
+                $v = $value;
+                if( 'float with unit' == $question['extra'] )
+                  $v = (object) ['value' => convert_to_float( $v ), 'unit' => NULL];
+                else if( 'int with unit' == $question['extra'] )
+                  $v = (object) ['value' => convert_to_int( $v ), 'unit' => NULL];
+                $obj = ['id' => $question['option_id'], 'value' => $v];
 
+                // look for this id as an integer in the array and replace it with an object
                 $found = false;
                 foreach( $new_value as $i => $v )
                 {
@@ -2049,15 +2052,7 @@ class qnaire extends \cenozo\database\record
                   }
                 }
 
-                if( !$found )
-                {
-                  $new_value[] = [
-                    'id' => $question['option_id'],
-                    'value' => 'number with unit' == $question['extra'] ?
-                      (object) ['value' => convert_to_number( $value ), 'unit' => NULL] :
-                      $value
-                  ];
-                }
+                if( !$found ) $new_value[] = $obj;
                 $db_answer->value = util::json_encode( $new_value );
                 $db_answer->save();
               }
@@ -2107,7 +2102,8 @@ class qnaire extends \cenozo\database\record
           else if( $apply_this_row )
           {
             $formatted_value = $value;
-            if( 'number' == $question['type'] ) $formatted_value = convert_to_number( $value );
+            if( 'float' == $question['type'] ) $formatted_value = convert_to_float( $value );
+            if( 'int' == $question['type'] ) $formatted_value = convert_to_int( $value );
             $db_answer->value = util::json_encode( $formatted_value );
             $db_answer->save();
           }
@@ -3515,7 +3511,7 @@ class qnaire extends \cenozo\database\record
 
                     if( !is_null( $column['extra'] ) )
                     {
-                      if( 'number with unit' == $column['extra'] )
+                      if( preg_match( '/ with unit$/', $column['extra'] ) )
                       {
                         $row_value = NULL;
                         if( property_exists( $a, 'value' ) )
@@ -3564,7 +3560,7 @@ class qnaire extends \cenozo\database\record
                   }
                 }
               }
-              else if( 'number with unit' == $column['type'] )
+              else if( preg_match( '/ with unit$/', $column['type'] ) )
               {
                 // if the column has a unit_list property then this is the UNIT column, otherwise it's the value
                 if( is_object( $answer ) )
@@ -3579,7 +3575,7 @@ class qnaire extends \cenozo\database\record
                   }
                 }
               }
-              else // date, number, string, text and time are all just direct answers
+              else // date, float, int, string, text and time are all just direct answers
               {
                 $row_value = $answer;
               }
@@ -6553,6 +6549,7 @@ class qnaire extends \cenozo\database\record
           if( !is_null( $db_equipment_type ) ) $db_question->equipment_type_id = $db_equipment_type->id;
           if( !is_null( $db_lookup ) ) $db_question->lookup_id = $db_lookup->id;
           $db_question->unit_list = $question_object->unit_list;
+          $db_question->number_is_float = $question_object->number_is_float;
           $db_question->minimum = $question_object->minimum;
           $db_question->maximum = $question_object->maximum;
           $db_question->default_answer = $question_object->default_answer;
@@ -6580,6 +6577,7 @@ class qnaire extends \cenozo\database\record
               $db_question_option->extra = $question_option_object->extra;
               $db_question_option->multiple_answers = $question_option_object->multiple_answers;
               $db_question_option->unit_list = $question_option_object->unit_list;
+              $db_question_option->number_is_float = $question_option_object->number_is_float;
               $db_question_option->minimum = $question_option_object->minimum;
               $db_question_option->maximum = $question_option_object->maximum;
               $db_question_option->precondition = $question_option_object->precondition;

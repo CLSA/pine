@@ -24,6 +24,13 @@ cenozoApp.defineModule({
         return !model.viewModel.record.extra ? true : "add";
       },
     });
+    module.addInput("", "number_is_float", {
+      title: "Allow Decimals",
+      type: "boolean",
+      isExcluded: function ($state, model) {
+        return !model.viewModel.record.extra || !model.viewModel.record.extra.match(/^number/) ? true : "add";
+      },
+    });
     module.addInput("", "unit_list", {
       title: "Unit List",
       type: "text",
@@ -173,6 +180,7 @@ cenozoApp.defineModule({
 
                 if (angular.isDefined(data.extra)) {
                   if (!data.extra) object.record.multiple_answers = false;
+                  if (!object.record.extra.match(/^number/)) object.record.number_is_float = null;
                   if ("number with unit" != object.record.extra) object.record.unit_list = null;
                   if (!["date", "number", "number with unit"].includes(data.extra)) {
                     object.record.minimum = "";

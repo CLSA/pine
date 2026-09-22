@@ -26,12 +26,16 @@ BEGIN
       SIGNAL SQLSTATE '23000' SET MESSAGE_TEXT = @sql, MYSQL_ERRNO = 1062;
     END IF;
 
+    IF( NEW.type LIKE "number%" AND NEW.number_is_float IS NULL ) THEN
+      SET NEW.number_is_float = 0;
+    ELSEIF( NEW.type NOT LIKE "number%" AND NEW.number_is_float IS NOT NULL ) THEN
+      SET NEW.number_is_float = NULL;
+    END IF;
+
     IF( "number with unit" = NEW.type AND NEW.unit_list IS NULL ) THEN
       SET NEW.unit_list = "[]";
-    ELSE
-      IF( "number with unit" != NEW.type AND NEW.unit_list IS NOT NULL ) THEN
-        SET NEW.unit_list = NULL;
-      END IF;
+    ELSEIF( "number with unit" != NEW.type AND NEW.unit_list IS NOT NULL ) THEN
+      SET NEW.unit_list = NULL;
     END IF;
   END IF;
 END ;;

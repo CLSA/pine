@@ -9,6 +9,7 @@ CREATE TABLE question_option (
   exclusive tinyint(1) NOT NULL DEFAULT 0,
   extra enum('date','number','number with unit','string','text','time') DEFAULT NULL,
   multiple_answers tinyint(1) NOT NULL DEFAULT 0,
+  number_is_float tinyint(1) DEFAULT NULL,
   unit_list text DEFAULT NULL CHECK (json_valid(unit_list)),
   minimum varchar(1023) DEFAULT NULL,
   maximum varchar(1023) DEFAULT NULL,

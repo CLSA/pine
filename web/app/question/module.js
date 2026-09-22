@@ -103,6 +103,13 @@ cenozoApp.defineModule({
         return "lookup" != model.viewModel.record.type ? true : "add";
       },
     });
+    module.addInput("", "number_is_float", {
+      title: "Allow Decimals",
+      type: "boolean",
+      isExcluded: function ($state, model) {
+        return !model.viewModel.record.type || !model.viewModel.record.type.match(/^number/) ? true : "add";
+      },
+    });
     module.addInput("", "unit_list", {
       title: "Unit List",
       type: "text",
@@ -458,6 +465,7 @@ cenozoApp.defineModule({
                   if ("device" != object.record.type) object.record.device_id = null;
                   if ("equipment" != object.record.type) object.record.equipment_type_id = null;
                   if ("lookup" != object.record.type) object.record.lookup_id = null;
+                  if (!object.record.type.match(/^number/)) object.record.number_is_float = null;
                   if ("number with unit" != object.record.type) object.record.unit_list = null;
                   if (!["date", "number","number with unit"].includes(object.record.type)) {
                     object.record.minimum = null;

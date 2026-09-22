@@ -420,6 +420,29 @@ cenozoApp.defineModule({
             return list;
           }
 
+          function isInvalidNumber(type, number_is_float, value) {
+            let number_to_test = null;
+            if ("number" == type && null !== value && !angular.isObject(value)) {
+              // we're testing a number
+              number_to_test = value;
+            } else if (
+              "number with unit" == type &&
+              angular.isObject(value) &&
+              angular.isDefined(value.value) &&
+              null != value.value
+            ) {
+              // we're testing the number in a number with unit object
+              number_to_test = value.value;
+            }
+
+            if (null !== number_to_test) {
+              const re = number_is_float ? /^-?(([0-9]+\.?)|([0-9]*\.[0-9]+))$/ : /^-?[0-9]+$/;
+              return !re.test(number_to_test);
+            }
+
+            return false;
+          }
+
           function isTooSmall(type, minimum, value) {
             return (
               null != minimum &&
@@ -1530,6 +1553,7 @@ cenozoApp.defineModule({
                           "change_allowed",
                           "dkna_allowed",
                           "refuse_allowed",
+                          "number_is_float",
                           "unit_list",
                           "minimum",
                           "maximum",
@@ -1630,6 +1654,7 @@ cenozoApp.defineModule({
                                   "exclusive",
                                   "extra",
                                   "multiple_answers",
+                                  "number_is_float",
                                   "unit_list",
                                   "minimum",
                                   "maximum",
@@ -2410,6 +2435,25 @@ cenozoApp.defineModule({
               this.setAnswerInProgress = true;
               if (angular.isUndefined(noCompleteCheck)) noCompleteCheck = false;
 
+              if (isInvalidNumber(question.type, question.number_is_float, value)) {
+                const re = question.number_is_float ? /^-?(([0-9]+\.?)|([0-9]*\.[0-9]+))$/ : /^-?[0-9]+$/;
+                if (!re.test(value)) {
+                  // When the number is out of bounds then alert the user
+                  await this.runQuery( async () => {
+                    await CnModalMessageFactory.instance({
+                      title: this.text("misc.notNumber"),
+                      message: this.text("misc.not" + (question.number_is_float ? "Float" : "Int") + "Message"),
+                    }).show();
+
+                    question.value = angular.copy(question.backupValue);
+                    this.convertValueToModel(question);
+                  });
+
+                  this.setAnswerInProgress = false;
+                  return;
+                }
+              }
+
               // if the question's type is a number then make sure it falls within the min/max values
               const minimum = this.evaluateLimit(question.minimum);
               const maximum = this.evaluateLimit(question.maximum);
@@ -2716,6 +2760,25 @@ cenozoApp.defineModule({
             },
 
             setAnswerValue: async function (question, option, valueIndex, answerValue) {
+              if (isInvalidNumber(option.extra, option.number_is_float, answerValue)) {
+                const re = option.number_is_float ? /^-?(([0-9]+\.?)|([0-9]*\.[0-9]+))$/ : /^-?[0-9]+$/;
+                if (!re.test(answerValue)) {
+                  // When the number is out of bounds then alert the user
+                  await this.runQuery( async () => {
+                    await CnModalMessageFactory.instance({
+                      title: this.text("misc.notNumber"),
+                      message: this.text("misc.not" + (option.number_is_float ? "Float" : "Int") + "Message"),
+                    }).show();
+
+                    // put the old value back
+                    var element = document.getElementById("option" + option.id + "value" + valueIndex);
+                    element.value = question.answer.optionList[option.id].valueList[valueIndex];
+                  });
+
+                  return;
+                }
+              }
+
               // if the question option's extra type is a number then make sure it falls within the min/max values
               const minimum = this.evaluateLimit(option.minimum);
               const maximum = this.evaluateLimit(option.maximum);
@@ -2739,53 +2802,55 @@ cenozoApp.defineModule({
                   var element = document.getElementById("option" + option.id + "value" + valueIndex);
                   element.value = question.answer.optionList[option.id].valueList[valueIndex];
                 });
-              } else {
-                var value = question.value;
-                var optionIndex = searchOptionList(value, option.id);
-                if (null != optionIndex) {
-                  if (option.multiple_answers) {
-                    if (
-                      null == answerValue ||
-                      ( angular.isString(answerValue) && 0 == answerValue.trim().length )
-                    ) {
-                      // if the value is blank then remove it
-                      value[optionIndex].value.splice(valueIndex, 1);
-                    } else {
-                      // does the value already exist?
-                      var existingValueIndex = value[optionIndex].value.indexOf(answerValue);
-                      if (0 <= existingValueIndex) {
-                        // don't add the answer, instead focus on the existing one and highlight it
-                        document.getElementById("option" + option.id + "value" + valueIndex).value = null;
-                        var element = document.getElementById(
-                          "option" + option.id + "value" + existingValueIndex
-                        );
-                        element.focus();
-                        element.select();
-                      } else {
-                        value[optionIndex].value[valueIndex] = answerValue;
-                      }
-                    }
+
+                return;
+              }
+
+              var value = question.value;
+              var optionIndex = searchOptionList(value, option.id);
+              if (null != optionIndex) {
+                if (option.multiple_answers) {
+                  if (
+                    null == answerValue ||
+                    ( angular.isString(answerValue) && 0 == answerValue.trim().length )
+                  ) {
+                    // if the value is blank then remove it
+                    value[optionIndex].value.splice(valueIndex, 1);
                   } else {
-                    value[optionIndex].value = "" !== answerValue ? answerValue : null;
-                    if ("date" == option.extra) {
-                      question.answer.optionList[option.id].formattedValueList[valueIndex] =
-                        formatDate(value[optionIndex].value);
-                    } else if ("time" == option.extra) {
-                      question.answer.optionList[option.id].formattedValueList[valueIndex] =
-                        formatTime(value[optionIndex].value);
-                    } else if ("number with unit" == option.extra) {
-                      if (angular.isUndefined(value[optionIndex].value.value)) {
-                        value[optionIndex].value.value = null;
-                      }
-                      if (angular.isUndefined(value[optionIndex].value.unit)) {
-                        value[optionIndex].value.unit = null;
-                      }
+                    // does the value already exist?
+                    var existingValueIndex = value[optionIndex].value.indexOf(answerValue);
+                    if (0 <= existingValueIndex) {
+                      // don't add the answer, instead focus on the existing one and highlight it
+                      document.getElementById("option" + option.id + "value" + valueIndex).value = null;
+                      var element = document.getElementById(
+                        "option" + option.id + "value" + existingValueIndex
+                      );
+                      element.focus();
+                      element.select();
+                    } else {
+                      value[optionIndex].value[valueIndex] = answerValue;
+                    }
+                  }
+                } else {
+                  value[optionIndex].value = "" !== answerValue ? answerValue : null;
+                  if ("date" == option.extra) {
+                    question.answer.optionList[option.id].formattedValueList[valueIndex] =
+                      formatDate(value[optionIndex].value);
+                  } else if ("time" == option.extra) {
+                    question.answer.optionList[option.id].formattedValueList[valueIndex] =
+                      formatTime(value[optionIndex].value);
+                  } else if ("number with unit" == option.extra) {
+                    if (angular.isUndefined(value[optionIndex].value.value)) {
+                      value[optionIndex].value.value = null;
+                    }
+                    if (angular.isUndefined(value[optionIndex].value.unit)) {
+                      value[optionIndex].value.unit = null;
                     }
                   }
                 }
-
-                await this.setAnswer(question, value);
               }
+
+              await this.setAnswer(question, value);
             },
 
             viewPage: async function () {

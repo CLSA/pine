@@ -14,6 +14,7 @@ CREATE TABLE question (
   device_id int(10) unsigned DEFAULT NULL,
   equipment_type_id int(10) unsigned DEFAULT NULL,
   lookup_id int(10) unsigned DEFAULT NULL,
+  number_is_float tinyint(1) DEFAULT NULL,
   unit_list text DEFAULT NULL CHECK (json_valid(unit_list)),
   minimum varchar(1023) DEFAULT NULL,
   maximum varchar(1023) DEFAULT NULL,

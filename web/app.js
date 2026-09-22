@@ -787,6 +787,18 @@ cenozo.service("CnTranslationHelper", [
             fr: "Veuillez patienter pendant que nous communiquons avec l’appareil.",
           },
           pleaseConfirm: { en: "Please confirm", fr: "Veuillez confirmer" },
+          notNumber: {
+            en: "Invalid Number",
+            fr: "Invalid Number", // TODO: TRANSLATE
+          },
+          notFloatMessage: {
+            en: "Please provide a numerical answer.",
+            fr: "Please provide a numerical answer.", // TODO: TRANSLATE
+          },
+          notIntMessage: {
+            en: "Please provide a whole numerical answer (without any decimal places).",
+            fr: "Please provide a whole numerical answer (without any decimal places).", // TODO: TRANSLATE
+          },
           minimumTitle: {
             en: "Value is too small",
             fr: "La valeur est trop petite",
