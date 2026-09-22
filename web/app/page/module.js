@@ -2949,8 +2949,9 @@ cenozoApp.defineModule({
               var patchData = null;
               if ("reset" == operation) {
                 var response = await CnModalConfirmFactory.instance({
+                  title: responseStage.name + ": " + operation.ucWords(),
                   message:
-                    "Are you sure you wish to reset this stage?<br><br>" +
+                    "Are you sure you wish to reset the <b>" + responseStage.name + "</b> stage?<br><br>" +
                     '<b class="text-danger">Note that by proceeding all data ' +
                     "collected during the stage will be deleted." +
                     (warning ? "<br><br>" + warning : "") + "</b>",
