@@ -272,8 +272,12 @@ class expression_manager extends \cenozo\singleton
             $this->term .= $char;
             $process_char = false;
           }
-          else if( preg_match( '/[0-9]/', $char ) )
-          {
+          // check if the operator is actually the start of a negative number
+          else if(
+            in_array( $this->last_term, [NULL, 'operator'] ) &&
+            '-' == $this->term &&
+            preg_match( '/[0-9]/', $char )
+          ) {
             // operator is actually a negative number
             $this->active_term = 'number';
             $this->term .= $char;
