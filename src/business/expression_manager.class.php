@@ -272,6 +272,13 @@ class expression_manager extends \cenozo\singleton
             $this->term .= $char;
             $process_char = false;
           }
+          else if( preg_match( '/[0-9]/', $char ) )
+          {
+            // operator is actually a negative number
+            $this->active_term = 'number';
+            $this->term .= $char;
+            $process_char = false;
+          }
           else
           {
             $compiled .= $this->process_operator();
