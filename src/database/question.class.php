@@ -473,7 +473,7 @@ class question extends base_qnaire_part
           $column_list[$column_name]['extra'] = preg_replace(
             '/^number/',
             $db_option->number_is_float ? "float" : "int",
-            $base_column['type']
+            $column_list[$column_name]['extra']
           );
         }
 
