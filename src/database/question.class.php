@@ -468,7 +468,7 @@ class question extends base_qnaire_part
         $column_list[$column_name]['question_option_precondition'] = $db_option->precondition;
 
         // convert number types to float or int
-        if( preg_match( '/^number/', $db_option->extra ) )
+        if( !is_null( $db_option->extra ) && preg_match( '/^number/', $db_option->extra ) )
         {
           $column_list[$column_name]['extra'] = preg_replace(
             '/^number/',
