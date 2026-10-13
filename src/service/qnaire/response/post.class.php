@@ -43,9 +43,10 @@ class post extends \cenozo\service\write
     $db_qnaire = $this->get_parent_record();
     $file = $this->get_file_as_raw();
     $mode = $this->get_argument( 'mode' );
+    $preserve_tokens = $this->get_argument( 'preserve_tokens' );
     $apply = in_array( $mode, ['import', 'import_new'] );
     $new_only = 'import_new' == $mode;
-    $this->set_data( $db_qnaire->import_response_data_from_csv( $file, $apply, $new_only ) );
+    $this->set_data( $db_qnaire->import_response_data_from_csv( $file, $apply, $new_only, $preserve_tokens ) );
   }
 
   /**

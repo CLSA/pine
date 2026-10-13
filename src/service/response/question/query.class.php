@@ -237,21 +237,16 @@ class query extends \cenozo\service\query
 
                       if( is_array( $decoded_value ) )
                       {
-                        // Create a list of selected options from the decoded value and see if the current option
-                        // has been selected or not
-                        $selected_option_id_list = [];
+                        // see if the option was selected
+                        $option_data['selected'] = false;
                         foreach( $decoded_value as $item )
                         {
-                          $selected_option_id_list[] = is_object( $item ) ?
-                            $selected_option_id_list[] = $item->id : $item;
-
-                          $option_data['selected'] = false;
-                          if( in_array( $option['id'], $selected_option_id_list ) )
+                          if( is_object( $item ) )
                           {
-                            $option_data['selected'] = true;
-
-                            if( is_object( $item ) )
+                            if( $option['id'] == $item->id )
                             {
+                              $option_data['selected'] = true;
+
                               // add the option data's value
                               $option_data['value'] = $item->value;
                               if(
@@ -271,6 +266,15 @@ class query extends \cenozo\service\query
                                     $unit_list_enum[$lang][$unit] : $unit
                                 );
                               }
+                              break;
+                            }
+                          }
+                          else
+                          {
+                            if( $option['id'] == $item )
+                            {
+                              $option_data['selected'] = true;
+                              break;
                             }
                           }
                         }

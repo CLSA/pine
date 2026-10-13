@@ -26,8 +26,14 @@ class response extends \cenozo\business\report\base_report
     $submitted = NULL;
     foreach( $this->get_restriction_list( false ) as $restriction )
     {
-      if( 'qnaire' == $restriction['name'] ) $db_qnaire = lib::create( 'database\qnaire', $restriction['value'] );
-      else if( 'submitted' == $restriction['name'] ) $modifier->where( 'response.submitted', '=', $restriction['value'] );
+      if( 'qnaire' == $restriction['name'] )
+      {
+        $db_qnaire = lib::create( 'database\qnaire', $restriction['value'] );
+      }
+      else if( 'submitted' == $restriction['name'] )
+      {
+        $modifier->where( 'response.submitted', '=', $restriction['value'] );
+      }
     }
 
     // manually restrict to collections
@@ -43,6 +49,12 @@ class response extends \cenozo\business\report\base_report
     }
 
     $response_data = $db_qnaire->get_response_data( $modifier );
+
+    // all device data must be encoded
+    foreach( $response_data['data'] as $index => $response )
+      foreach( $response as $key => $val )
+        if( is_object( $val ) ) $response_data['data'][$index][$key] = util::json_encode( $val );
+
     $this->add_table( NULL, $response_data['header'], $response_data['data'] );
   }
 }

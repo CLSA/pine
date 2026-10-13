@@ -867,8 +867,9 @@ cenozoApp.defineModule({
 
             onLoad: async function () {
               angular.extend(this, {
-                qnaireName: '',
+                qnaireName: "",
                 working: false,
+                preserveTokens: "1",
                 file: null,
                 confirmData: null,
               });
@@ -897,7 +898,9 @@ cenozoApp.defineModule({
 
                   // check the patch file
                   var response = await CnHttpFactory.instance({
-                    path: ["qnaire", this.qnaireId, "response"].join("/") + "?mode=confirm",
+                    path:
+                      ["qnaire", this.qnaireId, "response"].join("/") +
+                      "?mode=confirm&preserve_tokens=" + this.preserveTokens,
                     data: this.file,
                     onError: async function (error) {
                       await CnModalMessageFactory.httpError(error);
@@ -951,7 +954,9 @@ cenozoApp.defineModule({
                   data.append("file", this.file);
 
                   var response = await CnHttpFactory.instance({
-                    path: ["qnaire", this.qnaireId, "response"].join("/") + "?mode=" + importMode,
+                    path:
+                      ["qnaire", this.qnaireId, "response"].join("/") +
+                      "?mode=" + importMode + "&preserve_tokens=" + this.preserveTokens,
                     data: this.file,
                     onError: async function (error) {
                       await CnModalMessageFactory.httpError(error);

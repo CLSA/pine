@@ -477,7 +477,9 @@ class qnaire extends \cenozo\database\record
     // copy all deviation types
     $deviation_sel = lib::create( 'database\select' );
     $deviation_sel->add_column( 'type' );
+    $deviation_sel->add_column( 'rank' );
     $deviation_sel->add_column( 'name' );
+    $deviation_sel->add_column( 'other' );
     $deviation_mod = lib::create( 'database\modifier' );
     $deviation_mod->order( 'deviation_type.id' );
     foreach( $db_source_qnaire->get_deviation_type_list( $deviation_sel, $deviation_mod )
@@ -1522,10 +1524,15 @@ class qnaire extends \cenozo\database\record
    * @param string $csv_data The CSV contents (including a header and one row for each response)
    * @param boolean $apply Whether to apply or evaluate the CSV data
    * @param boolean $apply Whether to only import new responses (only used when $apply is true)
+   * @param boolean $preserve_tokens Whether to keep the same tokens as in the CSV file or generate new ones
    * @return associative array
    */
-  public function import_response_data_from_csv( $csv_data, $apply = false, $new_only = false )
-  {
+  public function import_response_data_from_csv(
+    $csv_data,
+    $apply = false,
+    $new_only = false,
+    $preserve_tokens = false
+  ) {
     ini_set( 'memory_limit', '-1' );
     set_time_limit( 1800 ); // 30 minutes max
 
@@ -1539,14 +1546,14 @@ class qnaire extends \cenozo\database\record
       else if( 'date' == $type ) return preg_match( '/^[0-9]{4}-[0-1][0-9]-[0-3][0-9]$/', $value );
       else if( 'device' == $type ) return true;
       else if( 'equipment' == $type ) return true;
-      else if( 'float' == $type ) return util::string_matches_float( $value );
-      else if( 'int' == $type ) return util::string_matches_int( $value );
+      else if( 'float' == $type || 'float with unit' == $type ) return util::string_matches_float( $value );
+      else if( 'int' == $type || 'int with unit' == $type ) return util::string_matches_int( $value );
       else if( 'list' == $type ) return true;
       else if( 'lookup' == $type ) return true;
       else if( 'signature' == $type ) return 'YES' == $value;
       else if( 'string' == $type ) return true;
       else if( 'text' == $type ) return true;
-      else if( 'time' == $type ) return preg_match( '/^[01][0-9]:[0-5][0-9]$/', $value );
+      else if( 'time' == $type ) return preg_match( '/^([01][0-9]|2[0-3]):[0-5][0-9]$/', $value );
 
       return false;
     }
@@ -1554,6 +1561,45 @@ class qnaire extends \cenozo\database\record
     // private functions to convert a json values to a floats or ints
     function convert_to_float( $value ) { return util::string_matches_float( $value ) ? (float) $value : $value; }
     function convert_to_int( $value ) { return util::string_matches_int( $value ) ? (int) $value : $value; }
+    function get_value_for_extra( $question, $answer_value, $value )
+    {
+      $new_value = util::json_decode( $answer_value );
+      if( !is_array( $new_value ) ) $new_value = [];
+
+      $with_unit = false;
+      $v = $value;
+      if( 'float with unit' == $question['extra'] )
+      {
+        $with_unit = true;
+        $v = (object) ['value' => convert_to_float( $v ), 'unit' => NULL];
+      }
+      else if( 'int with unit' == $question['extra'] )
+      {
+        $with_unit = true;
+        $v = (object) ['value' => convert_to_int( $v ), 'unit' => NULL];
+      }
+      $obj = ['id' => $question['option_id'], 'value' => $v];
+
+      // look for this id as an integer in the array and replace it with an object
+      $found = false;
+      foreach( $new_value as $i => $v )
+      {
+        if(
+          // extra is a number with unit (object with value and unit properties)
+          ( $with_unit && is_object( $v ) && property_exists( $v, 'id' ) && $v->id == $question['option_id'] ) ||
+          // extra is a single value
+          ( is_int( $v ) && $v == $question['option_id'] )
+        ) {
+          $new_value[$i] = (array) $obj;
+          $found = true;
+          break;
+        }
+      }
+
+      if( !$found ) $new_value[] = $obj;
+
+      return util::json_encode( $new_value );
+    }
 
     $identifier_class_name = lib::get_class_name( 'database\identifier' );
     $participant_class_name = lib::get_class_name( 'database\participant' );
@@ -1606,7 +1652,8 @@ class qnaire extends \cenozo\database\record
         $column_name_list = [];
         foreach( $row as $index => $column_name )
         {
-          if( 'rank' == $column_name ) $metadata_columns['rank'] = $index;
+          if( 'token' == $column_name ) $metadata_columns['token'] = $index;
+          else if( 'rank' == $column_name ) $metadata_columns['rank'] = $index;
           else if( 'interview_type' == $column_name )
           {
             // note that the interview_type column is only used by qnaires with stages
@@ -1686,40 +1733,74 @@ class qnaire extends \cenozo\database\record
           $row_errors[] = sprintf( 'Line %d: identifier "%s" not found', $row_index+1, $identifier );
           continue;
         }
-        else
+
+        // the respondent may or may not already exist
+        $db_respondent = $respondent_class_name::get_unique_record(
+          ['qnaire_id', 'participant_id'],
+          [$this->id, $db_participant->id]
+        );
+
+        // make sure the start/end dates are valid
+        if( array_key_exists( 'start_datetime', $metadata ) && array_key_exists( 'last_datetime', $metadata ) )
         {
-          // the respondent may or may not already exist
-          $db_respondent = $respondent_class_name::get_unique_record(
-            ['qnaire_id', 'participant_id'],
-            [$this->id, $db_participant->id]
-          );
-
-          // the response may or may not already exist
-          if( !is_null( $db_respondent ) )
+          if( $metadata['start_datetime'] > $metadata['last_datetime'] )
           {
-            $db_response = $response_class_name::get_unique_record(
-              ['respondent_id', 'rank'],
-              [$db_respondent->id, $metadata['rank']]
+            $row_errors[] = sprintf(
+              'Line %d: start/last datetime mismatch: start "%s" > end "%s"',
+              $row_index+1,
+              $metadata['start_datetime'],
+              $metadata['last_datetime']
             );
+            continue;
+          }
+        }
+      }
 
-            if( !is_null( $db_response ) ) $existing = true;
+      // if preserving tokens the look for duplicates
+      if( $preserve_tokens )
+      {
+        $db_respondent_token_check = $respondent_class_name::get_unique_record( 'token', $metadata['token'] );
+        if( !is_null( $db_respondent_token_check ) )
+        {
+          if( $db_respondent_token_check->qnaire_id != $this->id )
+          {
+            $row_errors[] = sprintf( 'Line %d: token already exists in another questionnaire', $row_index+1 );
+            continue;
           }
 
-          // make sure the start/end dates are valid
-          if( array_key_exists( 'start_datetime', $metadata ) && array_key_exists( 'last_datetime', $metadata ) )
+          if( is_null( $db_participant ) )
           {
-            if( $metadata['start_datetime'] > $metadata['last_datetime'] )
+            // row is anonymous, so we're overwriting the existing respondent record
+            $db_respondent = $db_respondent_token_check;
+            $existing = true;
+          }
+          else
+          {
+            // row is not anonymous, so make sure the existing token belongs to the same participant
+            if( $db_respondent_token_check->participant_id != $db_participant->id )
             {
               $row_errors[] = sprintf(
-                'Line %d: start/last datetime mismatch: start "%s" > end "%s"',
+                'Line %d: token already belongs to %s in this questionnaire',
                 $row_index+1,
-                $metadata['start_datetime'],
-                $metadata['last_datetime']
+                is_null( $db_respondent_token_check->participant_id ) ?
+                'an anonymous participant' :
+                $db_respondent_token_check->get_participant()->uid
               );
               continue;
             }
           }
         }
+      }
+
+      // the response may or may not already exist
+      if( !is_null( $db_respondent ) )
+      {
+        $db_response = $response_class_name::get_unique_record(
+          ['respondent_id', 'rank'],
+          [$db_respondent->id, $metadata['rank']]
+        );
+
+        if( !is_null( $db_response ) ) $existing = true;
       }
 
       if( $existing ) $existing_responses++;
@@ -1730,9 +1811,12 @@ class qnaire extends \cenozo\database\record
 
       if( $apply_this_row )
       {
+        $new_respondent = false;
         if( is_null( $db_respondent ) )
         {
+          $new_respondent = true;
           $db_respondent = lib::create( 'database\respondent' );
+          $db_respondent->do_not_send_mail();
           $db_respondent->qnaire_id = $this->id;
           if( !is_null( $db_participant ) ) $db_respondent->participant_id = $db_participant->id;
         }
@@ -1748,7 +1832,15 @@ class qnaire extends \cenozo\database\record
             $db_respondent->end_datetime = array_key_exists( 'last_datetime', $metadata ) ?
               $metadata['last_datetime'] : util::get_datetime_object();
         }
+
         $db_respondent->save();
+
+        if( $new_respondent && $preserve_tokens )
+        {
+          // this must be done after saving the respondent (otherwise token is overwritten in respondent::save()
+          $db_respondent->token = $metadata['token'];
+          $db_respondent->save();
+        }
 
         if( is_null( $db_response ) )
         {
@@ -1901,10 +1993,10 @@ class qnaire extends \cenozo\database\record
               }
 
               // this unit belongs to a "number with unit" question
-              preg_match( '/ with type$/', $question['type'], $matches );
+              preg_match( '/ with unit$/', $question['type'], $matches );
               $new_value = (object) [
                 'value' => (
-                  'float with type' == $question['type'] ?
+                  'float with unit' == $question['type'] ?
                   convert_to_float( $temp_value ) :
                   convert_to_int( $temp_value )
                 ),
@@ -1941,32 +2033,7 @@ class qnaire extends \cenozo\database\record
             if( !test_value( $question['extra'], $value ) ) $invalid = true;
             else if( $apply_this_row )
             {
-              $a = util::json_decode( $db_answer->value );
-              if( is_null( $a ) ) $a = [];
-
-              // if the answer is an object then it has already been set to DK_NA or MISSING
-              if( is_object( $a ) )
-              {
-                throw lib::create( 'exception\notice',
-                  sprintf(
-                    'Can\'t set value for %s on row %d as the value is already DK_NA or MISSING.',
-                    $db_answer->get_question()->name,
-                    $row_index + 1
-                  ),
-                  __METHOD__
-                );
-              }
-
-              $v_index = NULL;
-              foreach( $a as $i => $v )
-              {
-                if( is_object( $v ) && $question['option_id'] == $v->id ) { $v_index = $i; break; }
-              }
-
-              $new_value = (object) ['id' => $question['option_id'], 'value' => $value];
-              if( is_null( $v_index ) ) $a[] = $new_value;
-              else $a[$v_index] = $new_value;
-              $db_answer->value = util::json_encode( $a );
+              $db_answer->value = get_value_for_extra( $question, $db_answer->value, $value );
               $db_answer->save();
             }
           }
@@ -2030,30 +2097,7 @@ class qnaire extends \cenozo\database\record
               if( !test_value( $question['extra'], $value ) ) $invalid = true;
               else if( $apply_this_row )
               {
-                $new_value = util::json_decode( $db_answer->value );
-                if( !is_array( $new_value ) ) $new_value = [];
-
-                $v = $value;
-                if( 'float with unit' == $question['extra'] )
-                  $v = (object) ['value' => convert_to_float( $v ), 'unit' => NULL];
-                else if( 'int with unit' == $question['extra'] )
-                  $v = (object) ['value' => convert_to_int( $v ), 'unit' => NULL];
-                $obj = ['id' => $question['option_id'], 'value' => $v];
-
-                // look for this id as an integer in the array and replace it with an object
-                $found = false;
-                foreach( $new_value as $i => $v )
-                {
-                  if( is_int( $v ) && $v == $question['option_id'] )
-                  {
-                    $new_value[$i] = (array) $obj;
-                    $found = true;
-                    break;
-                  }
-                }
-
-                if( !$found ) $new_value[] = $obj;
-                $db_answer->value = util::json_encode( $new_value );
+                $db_answer->value = get_value_for_extra( $question, $db_answer->value, $value );
                 $db_answer->save();
               }
             }
@@ -2184,6 +2228,7 @@ class qnaire extends \cenozo\database\record
       {
         $new_respondent = true;
         $db_respondent = lib::create( 'database\respondent' );
+        $db_respondent->do_not_send_mail();
         $db_respondent->qnaire_id = $this->id;
         $db_respondent->participant_id = $db_participant->id;
         $db_respondent->save();
@@ -3460,7 +3505,12 @@ class qnaire extends \cenozo\database\record
           {
             if( $non_exclusive_list && array_key_exists( 'option_id', $column ) )
             { // this is a multiple-answer question, so set the value to false unless this is the DN_KA column
-              $row_value = 'dkna' == $column['option_id'] ? 1 : 0;
+              $row_value = (
+                'dkna' == $column['option_id'] ?
+                1 : // dkna is selected
+                // set to NULL when there is extra data, otherwise to 0
+                ( array_key_exists( 'extra', $column ) && !is_null( $column['extra'] ) ? NULL : 0 )
+              );
             }
             else if( $non_exclusive_list ||
                      array_key_exists( 'option_list', $column ) ||
@@ -3474,7 +3524,12 @@ class qnaire extends \cenozo\database\record
           {
             if( $non_exclusive_list && array_key_exists( 'option_id', $column ) )
             { // this is a multiple-answer question, so set the value to false unless this is the REFUSED column
-              $row_value = 'refuse' == $column['option_id'] ? 1 : 0;
+              $row_value = (
+                'refuse' == $column['option_id'] ?
+                1 : // refuse is selected
+                // set to NULL when there is extra data, otherwise to 0
+                ( array_key_exists( 'extra', $column ) && !is_null( $column['extra'] ) ? NULL : 0 )
+              );
             }
             else if( $non_exclusive_list ||
                      array_key_exists( 'option_list', $column ) ||
@@ -3500,7 +3555,7 @@ class qnaire extends \cenozo\database\record
               }
               else
               {
-                $row_value = $non_exclusive_list ? 0 : NULL;
+                $row_value = $non_exclusive_list && is_null( $column['extra'] ) ? 0 : NULL;
                 if( is_array( $answer ) ) foreach( $answer as $a )
                 {
                   if( ( is_object( $a ) && $column['option_id'] == $a->id ) ||
@@ -6413,6 +6468,8 @@ class qnaire extends \cenozo\database\record
     $db_qnaire->version = property_exists( $qnaire_object, 'version' ) ? $qnaire_object->version : NULL;
     $db_qnaire->variable_suffix = $qnaire_object->variable_suffix;
     $db_qnaire->debug = $qnaire_object->debug;
+    $db_qnaire->anonymous = $qnaire_object->anonymous;
+    $db_qnaire->show_progress = $qnaire_object->show_progress;
     $db_qnaire->allow_in_hold = $qnaire_object->allow_in_hold;
     $db_qnaire->problem_report = $qnaire_object->problem_report;
     $db_qnaire->attributes_mandatory = $qnaire_object->attributes_mandatory;
