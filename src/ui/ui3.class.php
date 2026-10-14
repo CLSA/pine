@@ -1,0 +1,314 @@
+<?php
+/**
+ * ui.class.php
+ * 
+ * @author Patrick Emond <emondpd@mcmaster.ca>
+ */
+
+namespace pine\ui;
+use cenozo\lib, cenozo\log, pine\util;
+
+/**
+ * Application extension to ui class
+ */
+class ui3 extends \cenozo\ui\ui3
+{
+  /**
+   * Extends the parent method
+   */
+  public function get_interface()
+  {
+    $session = lib::create( 'business\session' );
+
+    // add the Permissions-Policy header so that microphones can be used by Chrome
+    header( 'Permissions-Policy: microphone=(self)' );
+
+    // If we're loading the qnaire run then show a special interface if we're logged in as the qnaire user
+    try
+    {
+      $db_response = $session->get_response();
+      if( !is_null( $db_response ) )
+      {
+        $setting_manager = lib::create( 'business\setting_manager' );
+        $qnaire_username = $setting_manager->get_setting( 'utility', 'qnaire_username' );
+        $db_user = $session->get_user();
+
+        if( !is_null( $db_user ) && $qnaire_username == $db_user->name )
+        {
+          // we'll need the main interface libraries
+          $this->add_base_libs();
+          $this->add_interface_libs();
+
+          // get the incompatible description, if there is one
+          $qnaire_description_class_name = lib::get_class_name( 'database\qnaire_description' );
+          $db_language = $db_response->get_language();
+          $db_qnaire_description = $qnaire_description_class_name::get_unique_record(
+            ['qnaire_id', 'language_id', 'type'],
+            [$db_response->get_respondent()->qnaire_id, $db_language->id, 'incompatible']
+          );
+          $incompatible_title = 'fr' == $db_language->code ? 'Navigateur incompatible' : 'Incompatible Browser';
+          if( is_null( $db_qnaire_description ) || is_null( $db_qnaire_description->value ) )
+          {
+            $incompatible_message = 'fr' == $db_language->code ? (
+              'Votre navigateur Web n’est pas compatible avec cette application.  '.
+              'Veuillez essayer de changer d’appareil, d’ordinateur ou de navigateur.'
+            ) : (
+              'Your web browser is not compatible with this application.  '.
+              'Please try using a different device, computer, or browser.'
+            );
+          }
+          else
+          {
+            $incompatible_message = addslashes( preg_replace( '/[\r\n]/', '', $db_qnaire_description->value ) );
+          }
+
+          // build the interface
+          ob_start();
+          include( dirname( __FILE__ ).'/qnaire_interface.php' );
+          return ob_get_clean();
+        }
+      }
+      else if( !$session->get_qnaire_has_stages() && array_key_exists( 'REDIRECT_URL', $_SERVER ) )
+      {
+        $self_path = substr( $_SERVER['PHP_SELF'], 0, strrpos( $_SERVER['PHP_SELF'], '/' ) + 1 );
+        $path = str_replace( $self_path, '', $_SERVER['REDIRECT_URL'] );
+        if( preg_match( '#\brun\b#', $path, $matches ) )
+        {
+          $error = [
+            'title' => 'Page Not Found / Page non trouvée',
+            'message' =>
+              'The address you have provided is either not valid or the '.
+              'server was unable to find the page you are looking for.'.
+              "<br/>\n".
+              'L’adresse fournie n’est pas valide ou le serveur n’a pas pu trouver la page que vous recherchez.'
+          ];
+          return parent::get_error_interface( $error );
+        }
+      }
+    }
+    catch( \cenozo\exception\notice $e )
+    {
+      return parent::get_error_interface([
+        'title' => 'Please Note',
+        'message' => $e->get_raw_message()
+      ]);
+    }
+
+    // if none of the above applies then load the regular interface
+    return parent::get_interface();
+  }
+
+  /**
+   * Extends the parent method
+   */
+  protected function generate_modules()
+  {
+    parent::generate_modules();
+
+    $module = $this->get_module( 'identifier' );
+    if( !is_null( $module ) ) $module->set_list_menu( false );
+
+    $qnaire_module = $this->get_module( 'qnaire' );
+    if( !is_null( $qnaire_module ) )
+    {
+      $qnaire_module->add_child( 'respondent' );
+      $qnaire_module->add_child( 'reminder' );
+      $qnaire_module->add_child( 'qnaire_description' );
+      $qnaire_module->add_child( 'module' );
+      $qnaire_module->add_child( 'question' );
+      $qnaire_module->add_child( 'attribute' );
+      $qnaire_module->add_child( 'qnaire_consent_type_confirm' );
+      $qnaire_module->add_child( 'qnaire_participant_trigger' );
+      $qnaire_module->add_child( 'qnaire_collection_trigger' );
+      $qnaire_module->add_child( 'qnaire_consent_type_trigger' );
+      $qnaire_module->add_child( 'qnaire_event_type_trigger' );
+      $qnaire_module->add_child( 'qnaire_alternate_consent_type_trigger' );
+      $qnaire_module->add_child( 'qnaire_proxy_type_trigger' );
+      $qnaire_module->add_child( 'qnaire_equipment_type_trigger' );
+      $qnaire_module->add_child( 'stage' );
+      $qnaire_module->add_child( 'qnaire_document' );
+      $qnaire_module->add_child( 'qnaire_report' );
+      $qnaire_module->add_child( 'device' );
+      $qnaire_module->add_child( 'deviation_type' );
+      $qnaire_module->add_child( 'embedded_file' );
+      $qnaire_module->add_choose( 'language' );
+      $qnaire_module->add_action( 'clone', '/{identifier}' );
+      $qnaire_module->add_action( 'import_responses', '/{identifier}' );
+      $qnaire_module->add_action( 'get_respondent', '/{identifier}' );
+      $qnaire_module->add_action( 'mass_respondent', '/{identifier}' );
+      $qnaire_module->add_action( 'import' );
+      $qnaire_module->add_action( 'patch', '/{identifier}' );
+    }
+
+    // remove unneeded choose/child relationships
+    $module = $this->get_module( 'collection' );
+    if( !is_null( $module ) )
+    {
+      $module->remove_choose( 'application' );
+      $module->remove_choose( 'participant' );
+      $module->remove_choose( 'user' );
+    }
+
+    // remove unneeded choose/child relationships
+    $module = $this->get_module( 'consent_type' );
+    if( !is_null( $module ) )
+    {
+      $module->remove_child( 'participant' );
+      $module->remove_child( 'role' );
+    }
+
+    // remove unneeded choose/child relationships
+    $module = $this->get_module( 'event_type' );
+    if( !is_null( $module ) )
+    {
+      $module->remove_child( 'participant' );
+      $module->remove_child( 'role' );
+    }
+
+    // remove unneeded choose/child relationships
+    $module = $this->get_module( 'proxy_type' );
+    if( !is_null( $module ) )
+    {
+      $module->remove_child( 'participant' );
+      $module->remove_child( 'role' );
+    }
+
+    $module = $this->get_module( 'lookup' );
+    if( !is_null( $module ) )
+    {
+      $module->add_child( 'indicator' );
+      $module->add_child( 'lookup_item' );
+      $module->add_action( 'upload', '/{identifier}' );
+    }
+
+    $module = $this->get_module( 'lookup_item' );
+    if( !is_null( $module ) ) $module->add_choose( 'indicator' );
+
+    $module = $this->get_module( 'indicator' );
+    if( !is_null( $module ) ) $module->add_choose( 'lookup_item' );
+
+    $module = $this->get_module( 'qnaire_report' );
+    if( !is_null( $module ) ) $module->add_child( 'qnaire_report_data' );
+
+    $module = $this->get_module( 'device' );
+    if( !is_null( $module ) )
+    {
+      $module->add_child( 'answer_device' );
+      $module->add_child( 'device_data' );
+    }
+
+    $module = $this->get_module( 'reminder' );
+    if( !is_null( $module ) ) $module->add_child( 'reminder_description' );
+
+    $module = $this->get_module( 'respondent' );
+    if( !is_null( $module ) )
+    {
+      $module->add_child( 'response' );
+      $module->add_child( 'respondent_mail' );
+      $module->add_action( 'run', '/{token}?{show_hidden}&{site}&{username}&{alternate_id}' );
+
+      if( !is_null( $qnaire_module ) && $qnaire_module->has_action('edit') )
+        $module->add_action( 'reassign' );
+
+      // add response children and actions here in case the qnaire is only done once
+      $module->add_child( 'response_stage' );
+      $module->add_child( 'response_attribute' );
+      $module->add_child( 'answer_device' );
+      $module->add_child( 'problem_report' );
+      $module->add_action( 'display', '/{identifier}' );
+    }
+
+    $module = $this->get_module( 'response' );
+    if( !is_null( $module ) )
+    {
+      $module->add_child( 'response_stage' );
+      $module->add_child( 'response_attribute' );
+      $module->add_child( 'answer_device' );
+      $module->add_child( 'problem_report' );
+      $module->add_action( 'display', '/{identifier}' );
+    }
+
+    $module = $this->get_module( 'stage' );
+    if( !is_null( $module ) ) $module->add_action( 'clone', '/{identifier}' );
+
+    $module = $this->get_module( 'module' );
+    if( !is_null( $module ) )
+    {
+      $module->add_child( 'module_description' );
+      $module->add_child( 'page' );
+      $module->add_action( 'clone', '/{identifier}' );
+    }
+
+    $module = $this->get_module( 'page' );
+    if( !is_null( $module ) )
+    {
+      $module->add_child( 'page_description' );
+      $module->add_child( 'question' );
+      $module->add_action( 'render', '/{identifier}' );
+      $module->add_action( 'clone', '/{identifier}' );
+    }
+
+    $module = $this->get_module( 'participant' );
+    if( !is_null( $module ) ) $module->set_list_menu( false );
+
+    $module = $this->get_module( 'question' );
+    if( !is_null( $module ) )
+    {
+      $module->add_child( 'answer' );
+      $module->add_child( 'question_description' );
+      $module->add_child( 'question_option' );
+      $module->add_child( 'qnaire_participant_trigger' );
+      $module->add_child( 'qnaire_collection_trigger' );
+      $module->add_child( 'qnaire_consent_type_trigger' );
+      $module->add_child( 'qnaire_event_type_trigger' );
+      $module->add_child( 'qnaire_alternate_consent_type_trigger' );
+      $module->add_child( 'qnaire_proxy_type_trigger' );
+      $module->add_child( 'qnaire_equipment_type_trigger' );
+      $module->add_action( 'clone', '/{identifier}' );
+      $module->add_action( 'chart', '/{identifier}' );
+    }
+
+    $module = $this->get_module( 'question_option' );
+    if( !is_null( $module ) )
+    {
+      $module->add_child( 'question_option_description' );
+      $module->add_action( 'clone', '/{identifier}' );
+    }
+  }
+
+  /**
+   * Extends the parent method
+   */
+  protected function generate_menus()
+  {
+    parent::generate_menus();
+
+    $db_role = lib::create( 'business\session' )->get_role();
+
+    // remove participant lists and utilities
+    $this->remove_menu_item( 'utility', 'Participant Multi-Edit' );
+    $this->remove_menu_item( 'utility', 'Participant Import' );
+    $this->remove_menu_item( 'utility', 'Participant Export' );
+    $this->remove_menu_item( 'utility', 'Participant Search' );
+    $this->remove_menu_item( 'utility', 'Tracing' );
+
+    // add list menu items
+    $this->add_menu_item( 'list', 'Lookups', 'lookup' );
+    $this->add_menu_item( 'list', 'Problem Reports', 'problem_report' );
+    $this->add_menu_item( 'list', 'Questionnaires', 'qnaire' );
+
+    // dont' show the user overview to respondents
+    if( 'interviewer' == $db_role->name ) $this->remove_menu_item( 'list', 'User Overview' );
+  }
+
+  /**
+   * Override the default maintenance title and message
+   */
+  protected $maintenance_title = 'System is Offline / Système hors ligne';
+  protected $maintenance_message =
+    'Sorry, our servers are currently unavailable. '.
+    'We apologize for the inconvenience, please try again at a later time.'.
+    "<br/>\n".
+    'Désolé, nos serveurs ne sont pas disponibles pour le moment. '.
+    'Nous nous excusons pour ce désagrément, veuillez réessayer plus tard.';
+}
