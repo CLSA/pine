@@ -27,7 +27,7 @@ class module extends \pine\service\base_qnaire_part_module
     if( $select->has_column( 'average_time' ) )
     {
       $modifier->join( 'page_average_time', 'page.id', 'page_average_time.page_id' );
-      $select->add_table_column( 'page_average_time', 'time', 'average_time' );
+      $select->add_column( 'SEC_TO_TIME( ROUND( page_average_time.time ) )', 'average_time', false );
     }
 
     $modifier->join( 'module', 'page.module_id', 'module.id' );

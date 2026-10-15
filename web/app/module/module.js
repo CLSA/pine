@@ -44,7 +44,7 @@ cenozoApp.defineModule({
       "stage_id"
     );
     module.addInput("", "average_time", {
-      title: "Average Time (seconds)",
+      title: "Average Time",
       type: "string",
       isConstant: true,
       isExcluded: "add",
@@ -69,7 +69,7 @@ cenozoApp.defineModule({
       "average_time",
       {
         title: "Average Time",
-        type: "seconds",
+        type: "string",
       }
     );
 
@@ -196,9 +196,6 @@ cenozoApp.defineModule({
               if( angular.isDefined( this.parentModel.metadata.columnList ) )
                 this.parentModel.metadata.columnList.stage_id.enumList = [];
               await this.$$onView(force);
-              this.record.average_time = $filter("cnSeconds")(
-                Math.round(this.record.average_time)
-              );
 
               if( this.record.stages ) {
                 const [stageResponse, moduleCountResponse] = await Promise.all([

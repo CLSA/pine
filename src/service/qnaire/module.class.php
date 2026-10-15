@@ -77,7 +77,7 @@ class module extends \cenozo\service\module
     if( $select->has_column( 'average_time' ) )
     {
       $modifier->join( 'qnaire_average_time', 'qnaire.id', 'qnaire_average_time.qnaire_id' );
-      $select->add_table_column( 'qnaire_average_time', 'time', 'average_time' );
+      $select->add_column( 'SEC_TO_TIME( ROUND( qnaire_average_time.time ) )', 'average_time', false );
     }
 
     $db_qnaire = $this->get_resource();

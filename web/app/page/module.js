@@ -16,7 +16,7 @@ cenozoApp.defineModule({
       help: "Determines whether questions on this page should be organized into a table."
     });
     module.addInput("", "average_time", {
-      title: "Average Time (seconds)",
+      title: "Average Time",
       type: "string",
       isConstant: true,
       isExcluded: "add",
@@ -56,7 +56,7 @@ cenozoApp.defineModule({
       module.columnList,
       "question_count",
       "average_time",
-      { title: "Average Time", type: "seconds" }
+      { title: "Average Time", type: "string" }
     );
 
     module.addExtraOperation("view", {
@@ -3382,7 +3382,6 @@ cenozoApp.defineModule({
           angular.extend(object, {
             onView: async function (force) {
               await this.$$onView(force);
-              this.record.average_time = $filter("cnSeconds")(Math.round(this.record.average_time));
               this.record.prompts = CnTranslationHelper.parseDescriptions(this.record.prompts);
               this.record.popups = CnTranslationHelper.parseDescriptions(this.record.popups);
               this.record.module_prompts = CnTranslationHelper.parseDescriptions(this.record.module_prompts);

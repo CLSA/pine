@@ -1151,9 +1151,6 @@ cenozoApp.defineModule({
                 await this.respondentModel.updateUsesParent();
               }
 
-              this.record.average_time = $filter("cnSeconds")(
-                Math.round(this.record.average_time)
-              );
               this.working = false;
               this.file = null;
               this.difference = null;
