@@ -1,3 +1,4 @@
+const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
@@ -268,5 +269,23 @@ export class CN_model_qnaire extends CN_base_model {
         },
       },
     });
+  }
+}
+
+export class CN_view_qnaire extends CN_action_view {
+  /**
+   * Extend parent method
+   */
+  get_selector_child_list() {
+    const role = CN_session.get("role", "name");
+    const stages = this.get_property_value("stages");
+    const stages_child_list = ["deviation_type", "device", "qnaire_consent_type_confirm", "stage"];
+    const interviewer_child_list = ["qnaire_document", "respondent"];
+    return super.get_selector_child_list().filter(child =>
+      // some children should only show in qnaires with stages
+      (stages || !stages_child_list.includes(child.model.get_name())) &&
+      // interviewers only see specific children
+      ("interviewer" != role || interviewer_child_list.includes(child.model.get_name()))
+    );
   }
 }
