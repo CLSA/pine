@@ -114,20 +114,20 @@ class ui3 extends \cenozo\ui\ui3
       $qnaire_module->add_child( 'attribute' );
       $qnaire_module->add_child( 'deviation_type' );
       $qnaire_module->add_child( 'device' );
-      /*
       $qnaire_module->add_child( 'embedded_file' );
       $qnaire_module->add_choose( 'language' );
-      $qnaire_module->add_child( 'module' );
+      //$qnaire_module->add_child( 'module' );
       $qnaire_module->add_child( 'qnaire_alternate_consent_type_trigger' );
       $qnaire_module->add_child( 'qnaire_collection_trigger' );
       $qnaire_module->add_child( 'qnaire_consent_type_confirm' );
       $qnaire_module->add_child( 'qnaire_consent_type_trigger' );
-      $qnaire_module->add_child( 'qnaire_description' );
-      $qnaire_module->add_child( 'qnaire_document' );
+      //$qnaire_module->add_child( 'qnaire_description' );
+      //$qnaire_module->add_child( 'qnaire_document' );
       $qnaire_module->add_child( 'qnaire_equipment_type_trigger' );
       $qnaire_module->add_child( 'qnaire_event_type_trigger' );
       $qnaire_module->add_child( 'qnaire_participant_trigger' );
       $qnaire_module->add_child( 'qnaire_proxy_type_trigger' );
+      /*
       $qnaire_module->add_child( 'qnaire_report' );
       $qnaire_module->add_child( 'question' );
       $qnaire_module->add_child( 'reminder' );
