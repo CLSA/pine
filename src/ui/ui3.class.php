@@ -121,8 +121,8 @@ class ui3 extends \cenozo\ui\ui3
       $qnaire_module->add_child( 'qnaire_collection_trigger' );
       $qnaire_module->add_child( 'qnaire_consent_type_confirm' );
       $qnaire_module->add_child( 'qnaire_consent_type_trigger' );
-      //$qnaire_module->add_child( 'qnaire_description' );
-      //$qnaire_module->add_child( 'qnaire_document' );
+      $qnaire_module->add_child( 'qnaire_description' );
+      $qnaire_module->add_child( 'qnaire_document' );
       $qnaire_module->add_child( 'qnaire_equipment_type_trigger' );
       $qnaire_module->add_child( 'qnaire_event_type_trigger' );
       $qnaire_module->add_child( 'qnaire_participant_trigger' );
