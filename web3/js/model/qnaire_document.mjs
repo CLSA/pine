@@ -19,6 +19,7 @@ export class CN_model_qnaire_document extends CN_base_model {
           type: "file",
           file: {
             encoding: "base64",
+            mime_type: "application/pdf",
             get_filename: () => `${this.get_action().get_property_value("name")}.pdf`,
           },
           mimeType: "application/pdf",
