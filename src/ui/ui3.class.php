@@ -132,8 +132,8 @@ class ui3 extends \cenozo\ui\ui3
       $qnaire_module->add_child( 'question' );
       $qnaire_module->add_child( 'reminder' );
       $qnaire_module->add_child( 'respondent' );
-      $qnaire_module->add_child( 'stage' );
       */
+      $qnaire_module->add_child( 'stage' );
       $qnaire_module->add_action( 'clone', '/{identifier}' );
       $qnaire_module->add_action( 'get_respondent', '/{identifier}' );
       $qnaire_module->add_action( 'import' );
