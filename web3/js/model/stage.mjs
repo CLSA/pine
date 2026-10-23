@@ -16,6 +16,8 @@ export class CN_model_stage extends CN_base_model {
       columns: {
         rank: { column: "stage.rank", title: "Rank", type: "rank" },
         name: { title: "Name", column: "stage.name" },
+        order_deviation: { title: "Order Deviation", type: "boolean" },
+        skip_deviation: { title: "Skip Deviation", type: "boolean" },
         precondition: { column: "stage.precondition", title: "Precondition" },
         first_module: { title: "First Module", column: "first_module.name" },
         last_module: { title: "Last Module", column: "last_module.name" },
@@ -36,6 +38,8 @@ export class CN_model_stage extends CN_base_model {
           },
         },
         name: { title: "Name", format: "identifier" },
+        order_deviation: { title: "Require Order Deviation", type: "boolean" },
+        skip_deviation: { title: "Require Skip Deviation", type: "boolean" },
         precondition: {
           title: "Precondition",
           type: "text",

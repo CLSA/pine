@@ -8,6 +8,8 @@ CREATE TABLE stage (
   last_module_id int(10) unsigned NOT NULL,
   rank int(10) unsigned NOT NULL,
   name varchar(255) NOT NULL,
+  order_deviation tinyint(1) NOT NULL DEFAULT 1,
+  skip_deviation tinyint(1) NOT NULL DEFAULT 1,
   precondition text DEFAULT NULL,
   token_check_precondition text DEFAULT NULL,
   PRIMARY KEY (id),

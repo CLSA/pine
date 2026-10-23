@@ -1295,6 +1295,8 @@ cenozoApp.defineModule({
                             "deviation_type_id", "deviation_comments", "comments", "token_check",
                             { table: "stage", column: "rank" },
                             { table: "stage", column: "name" },
+                            { table: "stage", column: "order_deviation" },
+                            { table: "stage", column: "skip_deviation" },
                             { table: "deviation_type", column: "name", alias: "deviation" },
                           ],
                         },
@@ -1328,10 +1330,13 @@ cenozoApp.defineModule({
                         // The launch operation may be an order deviation if another stage
                         // before this one is ready or paused
                         getDeviation: function () {
-                          return self.responseStageList
-                            .filter((rs) => rs.rank < responseStage.rank)
-                            .some((rs) => "ready" == rs.status) ?
-                            "order" : null;
+                          return (
+                            responseStage.order_deviation && self.responseStageList
+                              .filter((rs) => rs.rank < responseStage.rank)
+                              .some((rs) => "ready" == rs.status) ?
+                            "order" :
+                            null
+                          );
                         },
                       });
 
@@ -1345,7 +1350,7 @@ cenozoApp.defineModule({
                         name: "skip",
                         title: "Skip",
                         // the skip operation is always a deviation
-                        getDeviation: function () { return "skip"; },
+                        getDeviation: function () { return responseStage.skip_deviation ? "skip" : null; },
                       });
                     }
 

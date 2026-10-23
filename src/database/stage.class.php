@@ -197,6 +197,8 @@ class stage extends \cenozo\database\has_rank
   {
     $module_class_name = lib::get_class_name( 'database\module' );
 
+    $this->order_deviation = $db_stage->order_deviation;
+    $this->skip_deviation = $db_stage->skip_deviation;
     $this->precondition = $db_stage->precondition;
     $this->token_check_precondition = $db_stage->token_check_precondition;
 

@@ -471,6 +471,8 @@ class qnaire extends \cenozo\database\record
       $db_stage->qnaire_id = $this->id;
       $db_stage->rank = $db_source_stage->rank;
       $db_stage->name = $db_source_stage->name;
+      $db_stage->order_deviation = $db_source_stage->order_deviation;
+      $db_stage->skip_deviation = $db_source_stage->skip_deviation;
       $db_stage->clone_from( $db_source_stage );
     }
 
@@ -3711,6 +3713,25 @@ class qnaire extends \cenozo\database\record
     ini_set( 'memory_limit', '-1' );
     set_time_limit( 900 ); // 15 minutes max
 
+    // Temp function used to simply the code below
+    function apply_differences( $object, $record, $apply, $ignore_columns = [] )
+    {
+      // find and update all differences
+      $diff = [];
+      foreach( $object as $property => $value )
+      {
+        if( !in_array( $property, $ignore_columns ) && $record->$property != $value )
+        {
+          $diff[$property] = $value;
+          if( $apply ) $record->$property = $object->$property;
+        }
+      }
+
+      if( $apply ) $record->save();
+
+      return $diff;
+    }
+
     $language_class_name = lib::get_class_name( 'database\language' );
     $attribute_class_name = lib::get_class_name( 'database\attribute' );
     $qnaire_document_class_name = lib::get_class_name( 'database\qnaire_document' );
@@ -4059,23 +4080,8 @@ class qnaire extends \cenozo\database\record
           }
           else
           {
-            // find and update all differences
-            $diff = [];
-            foreach( $deviation_type as $property => $value )
-              if( $db_deviation_type->$property != $deviation_type->$property )
-                $diff[$property] = $deviation_type->$property;
-
-            if( 0 < count( $diff ) )
-            {
-              if( $apply )
-              {
-                $db_deviation_type->rank = $deviation_type->rank;
-                $db_deviation_type->name = $deviation_type->name;
-                $db_deviation_type->other = $deviation_type->other;
-                $db_deviation_type->save();
-              }
-              else $change_list[$db_deviation_type->name] = $diff;
-            }
+            $diff = apply_differences( $deviation_type, $db_deviation_type, $apply );
+            if( 0 < count( $diff ) ) $change_list[$db_deviation_type->name] = $diff;
           }
         }
 
@@ -4133,23 +4139,8 @@ class qnaire extends \cenozo\database\record
           }
           else
           {
-            // find and update all differences
-            $diff = [];
-            foreach( $attribute as $property => $value )
-              if( $db_attribute->$property != $attribute->$property )
-                $diff[$property] = $attribute->$property;
-
-            if( 0 < count( $diff ) )
-            {
-              if( $apply )
-              {
-                $db_attribute->name = $attribute->name;
-                $db_attribute->code = $attribute->code;
-                $db_attribute->note = $attribute->note;
-                $db_attribute->save();
-              }
-              else $change_list[$db_attribute->name] = $diff;
-            }
+            $diff = apply_differences( $attribute, $db_attribute, $apply );
+            if( 0 < count( $diff ) ) $change_list[$db_attribute->name] = $diff;
           }
         }
 
@@ -4199,22 +4190,8 @@ class qnaire extends \cenozo\database\record
           }
           else
           {
-            // find and update all differences
-            $diff = [];
-            foreach( $qnaire_document as $property => $value )
-              if( $db_qnaire_document->$property != $qnaire_document->$property )
-                $diff[$property] = $qnaire_document->$property;
-
-            if( 0 < count( $diff ) )
-            {
-              if( $apply )
-              {
-                $db_qnaire_document->name = $qnaire_document->name;
-                $db_qnaire_document->data = $qnaire_document->data;
-                $db_qnaire_document->save();
-              }
-              else $change_list[$db_qnaire_document->name] = $diff;
-            }
+            $diff = apply_differences( $qnaire_document, $db_qnaire_document, $apply );
+            if( 0 < count( $diff ) ) $change_list[$db_qnaire_document->name] = $diff;
           }
         }
 
@@ -4266,24 +4243,8 @@ class qnaire extends \cenozo\database\record
           }
           else
           {
-            // find and update all differences
-            $diff = [];
-            foreach( $embedded_file as $property => $value )
-              if( $db_embedded_file->$property != $embedded_file->$property )
-                $diff[$property] = $embedded_file->$property;
-
-            if( 0 < count( $diff ) )
-            {
-              if( $apply )
-              {
-                $db_embedded_file->name = $embedded_file->name;
-                $db_embedded_file->mime_type = $embedded_file->mime_type;
-                $db_embedded_file->size = $embedded_file->size;
-                $db_embedded_file->data = $embedded_file->data;
-                $db_embedded_file->save();
-              }
-              else $change_list[$db_embedded_file->name] = $diff;
-            }
+            $diff = apply_differences( $embedded_file, $db_embedded_file, $apply );
+            if( 0 < count( $diff ) ) $change_list[$db_embedded_file->name] = $diff;
           }
         }
 
@@ -4323,24 +4284,11 @@ class qnaire extends \cenozo\database\record
           $db_language = $language_class_name::get_unique_record( 'code', $qnaire_description->language );
           $db_qnaire_description = $this->get_description( $qnaire_description->type, $db_language );
 
-          // find and update all differences
-          $diff = [];
-          foreach( $qnaire_description as $property => $value )
-            if( 'language' != $property && $db_qnaire_description->$property != $qnaire_description->$property )
-              $diff[$property] = $qnaire_description->$property;
-
+          $diff = apply_differences( $qnaire_description, $db_qnaire_description, $apply, ['language'] );
           if( 0 < count( $diff ) )
           {
-            if( $apply )
-            {
-              $db_qnaire_description->value = $qnaire_description->value;
-              $db_qnaire_description->save();
-            }
-            else
-            {
-              $index = sprintf( '%s [%s]', $qnaire_description->type, $db_language->code );
-              $change_list[$index] = $diff;
-            }
+            $index = sprintf( '%s [%s]', $qnaire_description->type, $db_language->code );
+            $change_list[$index] = $diff;
           }
         }
 
@@ -4502,6 +4450,8 @@ class qnaire extends \cenozo\database\record
               $db_stage->qnaire_id = $this->id;
               $db_stage->rank = $stage->rank;
               $db_stage->name = sprintf( '%s_%s', $stage->name, $name_suffix );
+              $db_stage->order_deviation = $stage->order_deviation;
+              $db_stage->skip_deviation = $stage->skip_deviation;
               $db_stage->precondition = $stage->precondition;
               $db_stage->token_check_precondition = $stage->token_check_precondition;
               $db_stage->process_patch( $stage, $name_suffix, $apply );
@@ -4652,10 +4602,10 @@ class qnaire extends \cenozo\database\record
             );
           }
 
-          $db_qnaire_participant_trigger = NULL;
-          if( !is_null( $db_question ) )
-          {
-            $db_qnaire_participant_trigger = $qnaire_participant_trigger_class_name::get_unique_record(
+          $db_qnaire_participant_trigger = (
+            is_null( $db_question ) ?
+            NULL :
+            $qnaire_participant_trigger_class_name::get_unique_record(
               ['qnaire_id', 'question_id', 'answer_value', 'column_name'],
               [
                 $this->id,
@@ -4663,8 +4613,8 @@ class qnaire extends \cenozo\database\record
                 $qnaire_participant_trigger->answer_value,
                 $qnaire_participant_trigger->column_name
               ]
-            );
-          }
+            )
+          );
 
           if( is_null( $db_qnaire_participant_trigger ) )
           {
@@ -4679,30 +4629,21 @@ class qnaire extends \cenozo\database\record
           }
           else
           {
-            // find and update all differences
-            $diff = [];
-            foreach( $qnaire_participant_trigger as $property => $value )
-              if( 'question_name' != $property &&
-                  $db_qnaire_participant_trigger->$property != $qnaire_participant_trigger->$property )
-                $diff[$property] = $qnaire_participant_trigger->$property;
-
+            $diff = apply_differences(
+              $qnaire_participant_trigger,
+              $db_qnaire_participant_trigger,
+              $apply,
+              ['question_name']
+            );
             if( 0 < count( $diff ) )
             {
-              if( $apply )
-              {
-                $db_qnaire_participant_trigger->answer_value = $qnaire_participant_trigger->answer_value;
-                $db_qnaire_participant_trigger->save();
-              }
-              else
-              {
-                $index = sprintf(
-                  '%s %s [%s]',
-                  $qnaire_participant_trigger->column_name,
-                  $qnaire_participant_trigger->value,
-                  $qnaire_participant_trigger->question_name
-                );
-                $change_list[$index] = $diff;
-              }
+              $index = sprintf(
+                '%s %s [%s]',
+                $qnaire_participant_trigger->column_name,
+                $qnaire_participant_trigger->value,
+                $qnaire_participant_trigger->question_name
+              );
+              $change_list[$index] = $diff;
             }
           }
         }
@@ -4797,9 +4738,10 @@ class qnaire extends \cenozo\database\record
               );
             }
 
-            if( !is_null( $db_question ) )
-            {
-              $db_qnaire_collection_trigger = $qnaire_collection_trigger_class_name::get_unique_record(
+            $db_qnaire_collection_trigger = (
+              is_null( $db_question ) ?
+              NULL :
+              $qnaire_collection_trigger_class_name::get_unique_record(
                 ['qnaire_id', 'collection_id', 'question_id', 'answer_value'],
                 [
                   $this->id,
@@ -4807,8 +4749,8 @@ class qnaire extends \cenozo\database\record
                   $db_question->id,
                   $qnaire_collection_trigger->answer_value
                 ]
-              );
-            }
+              )
+            );
 
             if( is_null( $db_qnaire_collection_trigger ) )
             {
@@ -4823,30 +4765,21 @@ class qnaire extends \cenozo\database\record
             }
             else
             {
-              // find and update all differences
-              $diff = [];
-              foreach( $qnaire_collection_trigger as $property => $value )
-                if( !in_array( $property, [ 'collection_name', 'question_name' ] ) &&
-                    $db_qnaire_collection_trigger->$property != $qnaire_collection_trigger->$property )
-                  $diff[$property] = $qnaire_collection_trigger->$property;
-
+              $diff = apply_differences(
+                $qnaire_collection_trigger,
+                $db_qnaire_collection_trigger,
+                $apply,
+                ['collection_name', 'question_name']
+              );
               if( 0 < count( $diff ) )
               {
-                if( $apply )
-                {
-                  $db_qnaire_collection_trigger->answer_value = $qnaire_collection_trigger->answer_value;
-                  $db_qnaire_collection_trigger->save();
-                }
-                else
-                {
-                  $index = sprintf(
-                    '%s %s [%s]',
-                    $qnaire_collection_trigger->collection_name,
-                    $qnaire_collection_trigger->add_to ? 'add' : 'remove',
-                    $qnaire_collection_trigger->question_name
-                  );
-                  $change_list[$index] = $diff;
-                }
+                $index = sprintf(
+                  '%s %s [%s]',
+                  $qnaire_collection_trigger->collection_name,
+                  $qnaire_collection_trigger->add_to ? 'add' : 'remove',
+                  $qnaire_collection_trigger->question_name
+                );
+                $change_list[$index] = $diff;
               }
             }
           }
@@ -4870,7 +4803,7 @@ class qnaire extends \cenozo\database\record
             // see if the qnaire_collection_trigger exists
             if( ( $collection_name == $qnaire_collection_trigger->collection_name &&
                   $question_name == $qnaire_collection_trigger->question_name &&
-                  $db_qnaire_collection_trigger->add_to == $qnaire_collection_trigger->add_to ) )
+                  $db_qnaire_collection_trigger->answer_value == $qnaire_collection_trigger->answer_value ) )
             {
               $found = true;
               break;
@@ -4943,9 +4876,10 @@ class qnaire extends \cenozo\database\record
               );
             }
 
-            if( !is_null( $db_question ) )
-            {
-              $db_qnaire_consent_type_trigger = $qnaire_consent_type_trigger_class_name::get_unique_record(
+            $db_qnaire_consent_type_trigger = (
+              is_null( $db_question ) ?
+              NULL :
+              $qnaire_consent_type_trigger_class_name::get_unique_record(
                 ['qnaire_id', 'consent_type_id', 'question_id', 'answer_value'],
                 [
                   $this->id,
@@ -4953,8 +4887,8 @@ class qnaire extends \cenozo\database\record
                   $db_question->id,
                   $qnaire_consent_type_trigger->answer_value
                 ]
-              );
-            }
+              )
+            );
 
             if( is_null( $db_qnaire_consent_type_trigger ) )
             {
@@ -4969,30 +4903,21 @@ class qnaire extends \cenozo\database\record
             }
             else
             {
-              // find and update all differences
-              $diff = [];
-              foreach( $qnaire_consent_type_trigger as $property => $value )
-                if( !in_array( $property, [ 'consent_type_name', 'question_name' ] ) &&
-                    $db_qnaire_consent_type_trigger->$property != $qnaire_consent_type_trigger->$property )
-                  $diff[$property] = $qnaire_consent_type_trigger->$property;
-
+              $diff = apply_differences(
+                $qnaire_consent_type_trigger,
+                $db_qnaire_consent_type_trigger,
+                $apply,
+                ['consent_type_name', 'question_name']
+              );
               if( 0 < count( $diff ) )
               {
-                if( $apply )
-                {
-                  $db_qnaire_consent_type_trigger->answer_value = $qnaire_consent_type_trigger->answer_value;
-                  $db_qnaire_consent_type_trigger->save();
-                }
-                else
-                {
-                  $index = sprintf(
-                    '%s %s [%s]',
-                    $qnaire_consent_type_trigger->consent_type_name,
-                    $qnaire_consent_type_trigger->accept ? 'accept' : 'reject',
-                    $qnaire_consent_type_trigger->question_name
-                  );
-                  $change_list[$index] = $diff;
-                }
+                $index = sprintf(
+                  '%s %s [%s]',
+                  $qnaire_consent_type_trigger->consent_type_name,
+                  $qnaire_consent_type_trigger->accept ? 'accept' : 'reject',
+                  $qnaire_consent_type_trigger->question_name
+                );
+                $change_list[$index] = $diff;
               }
             }
           }
@@ -5089,9 +5014,10 @@ class qnaire extends \cenozo\database\record
               );
             }
 
-            if( !is_null( $db_question ) )
-            {
-              $db_qnaire_event_type_trigger = $qnaire_event_type_trigger_class_name::get_unique_record(
+            $db_qnaire_event_type_trigger = (
+              is_null( $db_question ) ?
+              NULL :
+              $qnaire_event_type_trigger_class_name::get_unique_record(
                 ['qnaire_id', 'event_type_id', 'question_id', 'answer_value'],
                 [
                   $this->id,
@@ -5099,8 +5025,8 @@ class qnaire extends \cenozo\database\record
                   $db_question->id,
                   $qnaire_event_type_trigger->answer_value
                 ]
-              );
-            }
+              )
+            );
 
             if( is_null( $db_qnaire_event_type_trigger ) )
             {
@@ -5115,29 +5041,20 @@ class qnaire extends \cenozo\database\record
             }
             else
             {
-              // find and update all differences
-              $diff = [];
-              foreach( $qnaire_event_type_trigger as $property => $value )
-                if( !in_array( $property, [ 'event_type_name', 'question_name' ] ) &&
-                    $db_qnaire_event_type_trigger->$property != $qnaire_event_type_trigger->$property )
-                  $diff[$property] = $qnaire_event_type_trigger->$property;
-
+              $diff = apply_differences(
+                $qnaire_event_type_trigger,
+                $db_qnaire_event_type_trigger,
+                $apply,
+                ['event_type_name', 'question_name']
+              );
               if( 0 < count( $diff ) )
               {
-                if( $apply )
-                {
-                  $db_qnaire_event_type_trigger->answer_value = $qnaire_event_type_trigger->answer_value;
-                  $db_qnaire_event_type_trigger->save();
-                }
-                else
-                {
-                  $index = sprintf(
-                    '%s [%s]',
-                    $qnaire_event_type_trigger->event_type_name,
-                    $qnaire_event_type_trigger->question_name
-                  );
-                  $change_list[$index] = $diff;
-                }
+                $index = sprintf(
+                  '%s [%s]',
+                  $qnaire_event_type_trigger->event_type_name,
+                  $qnaire_event_type_trigger->question_name
+                );
+                $change_list[$index] = $diff;
               }
             }
           }
@@ -5233,9 +5150,10 @@ class qnaire extends \cenozo\database\record
               );
             }
 
-            if( !is_null( $db_question ) )
-            {
-              $db_qnaire_aconsent_type_trigger = $qnaire_aconsent_type_trigger_class_name::get_unique_record(
+            $db_qnaire_aconsent_type_trigger = (
+              is_null( $db_question ) ?
+              NULL :
+              $qnaire_aconsent_type_trigger_class_name::get_unique_record(
                 ['qnaire_id', 'alternate_consent_type_id', 'question_id', 'answer_value'],
                 [
                   $this->id,
@@ -5243,8 +5161,8 @@ class qnaire extends \cenozo\database\record
                   $db_question->id,
                   $qnaire_aconsent_type_trigger->answer_value
                 ]
-              );
-            }
+              )
+            );
 
             if( is_null( $db_qnaire_aconsent_type_trigger ) )
             {
@@ -5259,30 +5177,21 @@ class qnaire extends \cenozo\database\record
             }
             else
             {
-              // find and update all differences
-              $diff = [];
-              foreach( $qnaire_aconsent_type_trigger as $property => $value )
-                if( !in_array( $property, [ 'alternate_consent_type_name', 'question_name' ] ) &&
-                    $db_qnaire_aconsent_type_trigger->$property != $qnaire_aconsent_type_trigger->$property )
-                  $diff[$property] = $qnaire_aconsent_type_trigger->$property;
-
+              $diff = apply_differences(
+                $qnaire_aconsent_type_trigger,
+                $db_qnaire_aconsent_type_trigger,
+                $apply,
+                ['alternate_consent_type_name', 'question_name']
+              );
               if( 0 < count( $diff ) )
               {
-                if( $apply )
-                {
-                  $db_qnaire_aconsent_type_trigger->answer_value = $qnaire_aconsent_type_trigger->answer_value;
-                  $db_qnaire_aconsent_type_trigger->save();
-                }
-                else
-                {
-                  $index = sprintf(
-                    '%s %s [%s]',
-                    $qnaire_aconsent_type_trigger->alternate_consent_type_name,
-                    $qnaire_aconsent_type_trigger->accept ? 'accept' : 'reject',
-                    $qnaire_aconsent_type_trigger->question_name
-                  );
-                  $change_list[$index] = $diff;
-                }
+                $index = sprintf(
+                  '%s %s [%s]',
+                  $qnaire_aconsent_type_trigger->alternate_consent_type_name,
+                  $qnaire_aconsent_type_trigger->accept ? 'accept' : 'reject',
+                  $qnaire_aconsent_type_trigger->question_name
+                );
+                $change_list[$index] = $diff;
               }
             }
           }
@@ -5379,9 +5288,10 @@ class qnaire extends \cenozo\database\record
               );
             }
 
-            if( !is_null( $db_question) )
-            {
-              $db_qnaire_proxy_type_trigger = $qnaire_proxy_type_trigger_class_name::get_unique_record(
+            $db_qnaire_proxy_type_trigger = (
+              is_null( $db_question ) ?
+              NULL :
+              $qnaire_proxy_type_trigger_class_name::get_unique_record(
                 ['qnaire_id', 'proxy_type_id', 'question_id', 'answer_value'],
                 [
                   $this->id,
@@ -5389,8 +5299,8 @@ class qnaire extends \cenozo\database\record
                   $db_question->id,
                   $qnaire_proxy_type_trigger->answer_value
                 ]
-              );
-            }
+              )
+            );
 
             if( is_null( $db_qnaire_proxy_type_trigger ) )
             {
@@ -5411,30 +5321,21 @@ class qnaire extends \cenozo\database\record
             }
             else
             {
-              // find and update all differences
-              $diff = [];
-              foreach( $qnaire_proxy_type_trigger as $property => $value )
-                if( !in_array( $property, [ 'proxy_type_name', 'question_name' ] ) &&
-                    $db_qnaire_proxy_type_trigger->$property != $qnaire_proxy_type_trigger->$property )
-                  $diff[$property] = $qnaire_proxy_type_trigger->$property;
-
+              $diff = apply_differences(
+                $qnaire_proxy_type_trigger,
+                $db_qnaire_proxy_type_trigger,
+                $apply,
+                ['proxy_type_name', 'question_name']
+              );
               if( 0 < count( $diff ) )
               {
-                if( $apply )
-                {
-                  $db_qnaire_proxy_type_trigger->answer_value = $qnaire_proxy_type_trigger->answer_value;
-                  $db_qnaire_proxy_type_trigger->save();
-                }
-                else
-                {
-                  $index = sprintf(
-                    '%s [%s]',
-                    $qnaire_proxy_type_trigger->proxy_type_name ?
-                      $qnaire_proxy_type_trigger->proxy_type_name : '(empty)',
-                    $qnaire_proxy_type_trigger->question_name
-                  );
-                  $change_list[$index] = $diff;
-                }
+                $index = sprintf(
+                  '%s [%s]',
+                  $qnaire_proxy_type_trigger->proxy_type_name ?
+                    $qnaire_proxy_type_trigger->proxy_type_name : '(empty)',
+                  $qnaire_proxy_type_trigger->question_name
+                );
+                $change_list[$index] = $diff;
               }
             }
           }
@@ -5530,13 +5431,14 @@ class qnaire extends \cenozo\database\record
               );
             }
 
-            if( !is_null( $db_question ) )
-            {
-              $db_qnaire_equipment_type_trigger = $qnaire_equipment_type_trigger_class_name::get_unique_record(
+            $db_qnaire_equipment_type_trigger = (
+              is_null( $db_question ) ?
+              NULL :
+              $qnaire_equipment_type_trigger_class_name::get_unique_record(
                 ['qnaire_id', 'equipment_type_id', 'question_id'],
                 [$this->id, $db_equipment_type->id, $db_question->id]
-              );
-            }
+              )
+            );
 
             if( is_null( $db_qnaire_equipment_type_trigger ) )
             {
@@ -5557,30 +5459,21 @@ class qnaire extends \cenozo\database\record
             }
             else
             {
-              // find and update all differences
-              $diff = [];
-              foreach( $qnaire_equipment_type_trigger as $property => $value )
-                if( !in_array( $property, [ 'equipment_type_name', 'question_name' ] ) &&
-                    $db_qnaire_equipment_type_trigger->$property != $qnaire_equipment_type_trigger->$property )
-                  $diff[$property] = $qnaire_equipment_type_trigger->$property;
-
+              $diff = apply_differences(
+                $qnaire_equipment_type_trigger,
+                $db_qnaire_equipment_type_trigger,
+                $apply,
+                ['equipment_type_name', 'question_name']
+              );
               if( 0 < count( $diff ) )
               {
-                if( $apply )
-                {
-                  $db_qnaire_equipment_type_trigger->loaned = $qnaire_equipment_type_trigger->loaned;
-                  $db_qnaire_equipment_type_trigger->save();
-                }
-                else
-                {
-                  $index = sprintf(
-                    '%s [%s]',
-                    $qnaire_equipment_type_trigger->equipment_type_name ?
-                      $qnaire_equipment_type_trigger->equipment_type_name : '(empty)',
-                    $qnaire_equipment_type_trigger->question_name
-                  );
-                  $change_list[$index] = $diff;
-                }
+                $index = sprintf(
+                  '%s [%s]',
+                  $qnaire_equipment_type_trigger->equipment_type_name ?
+                    $qnaire_equipment_type_trigger->equipment_type_name : '(empty)',
+                  $qnaire_equipment_type_trigger->question_name
+                );
+                $change_list[$index] = $diff;
               }
             }
           }
@@ -6117,6 +6010,8 @@ class qnaire extends \cenozo\database\record
       $stage_sel = lib::create( 'database\select' );
       $stage_sel->add_column( 'rank' );
       $stage_sel->add_column( 'name' );
+      $stage_sel->add_column( 'order_deviation' );
+      $stage_sel->add_column( 'skip_deviation' );
       $stage_sel->add_table_column( 'first_module', 'rank', 'first_module_rank' );
       $stage_sel->add_table_column( 'last_module', 'rank', 'last_module_rank' );
       $stage_sel->add_column( 'precondition' );
@@ -6698,6 +6593,8 @@ class qnaire extends \cenozo\database\record
           );
         }
 
+        $db_stage->order_deviation = $stage->order_deviation;
+        $db_stage->skip_deviation = $stage->skip_deviation;
         $db_stage->first_module_id = $db_first_module->id;
         $db_stage->last_module_id = $db_last_module->id;
         $db_stage->precondition = $stage->precondition;

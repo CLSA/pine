@@ -24,6 +24,14 @@ cenozoApp.defineModule({
           title: "Name",
           column: "stage.name",
         },
+        order_deviation: {
+          title: "Order Deviation",
+          type: "boolean",
+        },
+        skip_deviation: {
+          title: "Skip Deviation",
+          type: "boolean",
+        },
         precondition: {
           column: "stage.precondition",
           title: "Precondition",
@@ -55,6 +63,14 @@ cenozoApp.defineModule({
         title: "Name",
         type: "string",
         format: "identifier",
+      },
+      order_deviation: {
+        title: "Require Order Deviation",
+        type: "boolean",
+      },
+      skip_deviation: {
+        title: "Require Skip Deviation",
+        type: "boolean",
       },
       precondition: {
         title: "Precondition",
