@@ -1,5 +1,7 @@
 const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
+const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+import { CN_element_qnaire_navigator } from "../element/qnaire_navigator.mjs"
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_model_qnaire extends CN_base_model {
@@ -273,6 +275,13 @@ export class CN_model_qnaire extends CN_base_model {
 }
 
 export class CN_view_qnaire extends CN_action_view {
+  #qnaire_navigator;
+  #navigator_qnaire_list = [];
+  #navigator_item_list = [];
+
+  get_navigator_qnaire_list() { return this.#navigator_qnaire_list; }
+  get_navigator_item_list() { return this.#navigator_item_list; }
+
   /**
    * Extend parent method
    */
@@ -287,5 +296,53 @@ export class CN_view_qnaire extends CN_action_view {
       // interviewers only see specific children
       ("interviewer" != role || interviewer_child_list.includes(child.model.get_name()))
     );
+  }
+
+  /**
+   * Extend parent method
+   */
+  async on_load() {
+    await super.on_load();
+
+    const model = this.get_model();
+
+    // update the qnaire navigator lists
+    const [qnaire_list, module_list] = await Promise.all([
+      CN_api.get(model.get_base_path("api"), {
+        select: { column: [{ table: "qnaire", column: "name" }] },
+        modifier: { order: "qnaire.name" },
+      }),
+
+      CN_api.get(`${model.get_view_url(null, "api")}/module`, {
+        select: { column: [{ table: "module", column: "name" }, { table: "module", column: "rank" }] },
+        modifier: { order: "module.rank" },
+      }),
+    ]);
+
+    this.#navigator_qnaire_list = qnaire_list.map(qnaire => ({
+      id: qnaire.id,
+      name: qnaire.name,
+      path: `qnaire/view/${qnaire.id}`,
+      active: model.get_identifier() == qnaire.id,
+    }));
+
+    this.#navigator_item_list = module_list.map(module => ({
+      id: module.id,
+      name: `${module.rank}. ${module.name}`,
+      path: `${model.get_view_url(null)}/module/view/${module.id}`,
+      active: false,
+    }));
+  }
+
+  /**
+   * Extend parent method
+   */
+  update_element() {
+    super.update_element();
+
+    if (!this.#qnaire_navigator) this.#qnaire_navigator = CN_element_qnaire_navigator.prepend(this.get_element());
+    this.#qnaire_navigator.set_config("qnaire_list", this.#navigator_qnaire_list);
+    this.#qnaire_navigator.set_config("module_list", this.#navigator_item_list);
+    this.#qnaire_navigator.update_element();
   }
 }

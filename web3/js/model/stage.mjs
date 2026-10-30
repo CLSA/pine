@@ -48,7 +48,7 @@ export class CN_model_stage extends CN_base_model {
         token_check_precondition: {
           title: "Token Check Precondition",
           type: "text",
-          help: 
+          help:
             "An expression which determines if the interviewer must provide the token before launching the stage.",
         },
         first_module_id: {

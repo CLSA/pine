@@ -82,7 +82,7 @@ cenozoApp.initQnairePartModule = function (module, type) {
     identifier: {},
     name: {
       singular: type.replace(/_/g, " "),
-      plural: type.replace(/_/g, " ") + "",
+      plural: type.replace(/_/g, " ") + "s",
       possessive: type.replace(/ /g, " ") + "'s",
     },
     columnList: columnList,

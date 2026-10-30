@@ -116,7 +116,7 @@ class ui3 extends \cenozo\ui\ui3
       $qnaire_module->add_child( 'device' );
       $qnaire_module->add_child( 'embedded_file' );
       $qnaire_module->add_choose( 'language' );
-      //$qnaire_module->add_child( 'module' );
+      $qnaire_module->add_child( 'module' );
       $qnaire_module->add_child( 'qnaire_alternate_consent_type_trigger' );
       $qnaire_module->add_child( 'qnaire_collection_trigger' );
       $qnaire_module->add_child( 'qnaire_consent_type_confirm' );
@@ -128,11 +128,9 @@ class ui3 extends \cenozo\ui\ui3
       $qnaire_module->add_child( 'qnaire_participant_trigger' );
       $qnaire_module->add_child( 'qnaire_proxy_type_trigger' );
       $qnaire_module->add_child( 'qnaire_report' );
-      /*
       $qnaire_module->add_child( 'question' );
       $qnaire_module->add_child( 'reminder' );
-      $qnaire_module->add_child( 'respondent' );
-      */
+      //$qnaire_module->add_child( 'respondent' );
       $qnaire_module->add_child( 'stage' );
       $qnaire_module->add_action( 'clone', '/{identifier}' );
       $qnaire_module->add_action( 'get_respondent', '/{identifier}' );
@@ -256,9 +254,12 @@ class ui3 extends \cenozo\ui\ui3
     $module = $this->get_module( 'question' );
     if( !is_null( $module ) )
     {
+      /*
       $module->add_child( 'answer' );
       $module->add_child( 'question_description' );
+      */
       $module->add_child( 'question_option' );
+      /*
       $module->add_child( 'qnaire_participant_trigger' );
       $module->add_child( 'qnaire_collection_trigger' );
       $module->add_child( 'qnaire_consent_type_trigger' );
@@ -268,6 +269,7 @@ class ui3 extends \cenozo\ui\ui3
       $module->add_child( 'qnaire_equipment_type_trigger' );
       $module->add_action( 'clone', '/{identifier}' );
       $module->add_action( 'chart', '/{identifier}' );
+      */
     }
 
     $module = $this->get_module( 'question_option' );
