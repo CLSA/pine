@@ -1,10 +1,20 @@
+const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 import { CN_model_base_qnaire_part, CN_view_base_qnaire_part } from "./base_qnaire_part.mjs";
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_model_question extends CN_model_base_qnaire_part {
   constructor() {
     super("question");
+  }
+
+  /**
+   * Extend parent method
+   */
+  allow_add() {
+    // do not allow adding questions from the qnaire
+    return "qnaire" == this.get_parent_model().get_name() ? false : super.allow_add();
   }
 
   /**
@@ -16,6 +26,7 @@ export class CN_model_question extends CN_model_base_qnaire_part {
       title: "Question Options",
       table_prefix: false,
     });
+    for (const name in columns) columns[name].is_hidden = () => "qnaire" == this.get_parent_model().get_name();
 
     return {
       ...columns,
@@ -23,21 +34,23 @@ export class CN_model_question extends CN_model_base_qnaire_part {
         module_name: {
           column: "module.name",
           title: "Module",
-          is_hidden: () => "qnaire" != this.get_root_model().get_name(),
+          is_hidden: () => "qnaire" != this.get_parent_model().get_name(),
         },
         page_name: {
           column: "page.name",
           title: "Page",
-          is_hidden: () => "qnaire" != this.get_root_model().get_name(),
+          is_hidden: () => "qnaire" != this.get_parent_model().get_name(),
         },
         question_name: {
           column: "question.name",
           title: "Question",
-          is_hidden: () => "qnaire" != this.get_root_model().get_name(),
+          is_hidden: () => "qnaire" != this.get_parent_model().get_name(),
         },
         type: { title: "Type" },
         export: { title: "Exported", type: "boolean" },
         change_allowed: { title: "Change Allowed", type: "boolean" },
+        module_id: { column: "module.id", is_hidden: () => true },
+        page_id: { column: "page.id", is_hidden: () => true },
       },
     };
   }
@@ -176,6 +189,27 @@ export class CN_model_question extends CN_model_base_qnaire_part {
         return await CN_api.get("question", api_params);
       },
     };
+  }
+}
+
+export class CN_list_question extends CN_action_list {
+  /**
+   * Extend parent method
+   */
+  async on_row_click(record) {
+    const model = this.get_model();
+    if (!this.is_choosing() && "qnaire" == model.get_parent_model().get_name()) {
+      // add full qnaire/module/page path when selecting question from qnaire parent
+      const url = model.get_view_url(record.id);
+      await CN_session.navigate_to(
+        url.replace(
+          /question\/view/,
+          `module/view/${record.module_id}/page/view/${record.page_id}/question/view`
+        )
+      );
+    } else {
+      await super.on_row_click(record);
+    }
   }
 }
 
