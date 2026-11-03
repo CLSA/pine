@@ -1,7 +1,14 @@
+const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
+const { CN_base_action } = await import(`${CENOZO_URL}/js/action/base_action.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
+const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 import { CN_element_qnaire_navigator } from "../element/qnaire_navigator.mjs"
+const { CN_input_enum } = await import(`${CENOZO_URL}/js/input/enum.mjs`);
+const { CN_input_string } = await import(`${CENOZO_URL}/js/input/string.mjs`);
+const { CN_modal_input } = await import(`${CENOZO_URL}/js/modal/input.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_model_qnaire extends CN_base_model {
@@ -164,7 +171,6 @@ export class CN_model_qnaire extends CN_base_model {
           type: "text",
           is_constant: () => "view" == this.get_action_name() && this.get_action().get_property_value("readonly"),
         },
-        first_page_id: { meta: {}, is_hidden: () => true },
         email_communication: {
           title: "Email Communication",
           properties: {
@@ -271,8 +277,207 @@ export class CN_model_qnaire extends CN_base_model {
         },
         has_devices: { meta: {}, type: "boolean", is_hidden: () => true },
         sends_mail: { meta: {}, type: "boolean", is_hidden: () => true },
+        first_page_id: { meta: {}, type: "boolean", is_hidden: () => true },
       },
     });
+  }
+}
+
+export class CN_clone_qnaire extends CN_base_action {
+  #qnaire_name = null;
+  #operation_form_input;
+  #name_form_input;
+
+  constructor(parent_el, model) {
+    super("clone", parent_el, model);
+  }
+
+  /**
+   * Extend parent method
+   */
+  async get_text(type) {
+    if ("crumb" == type) {
+      return `${this.#qnaire_name}: Export`;
+    }
+
+    if ("header" == type) {
+      return `Copy/Export "${this.#qnaire_name}" Questionnaire`;
+    }
+
+    return await super.get_text(type);
+  }
+
+  /**
+   * Extend parent method
+   */
+  async on_navigate_to_parent() {
+    await CN_session.navigate_to(this.get_model().get_view_url());
+  }
+
+  /**
+   * Extend parent method
+   */
+  async on_load() {
+    const response = await CN_api.get(this.get_model().get_view_url(null, "api"), {
+      select: { column: "name" }
+    });
+    this.#qnaire_name = response.name;
+  }
+
+  /**
+   * Extend parent method
+   */
+  _create_body_element() {
+    const body_el = this.constructor.html(`
+      <div class="container-fluid text-info-emphasis">
+        <div class="pb-2">
+          This utility can be used to copy, export or print the "${this.#qnaire_name}" questionnaire.
+        </div>
+        <div name="operation" class="row py-1"></div>
+        <div name="name" class="row py-1"></div>
+      </div>
+    `);
+
+    const operation_el = body_el.querySelector("div[name=operation]");
+    const name_el = body_el.querySelector("div[name=name]");
+
+    CN_element_label.append(operation_el, { for: "operation", value: "Operation", class: "col-sm-3" });
+    this.#operation_form_input = CN_input_enum.append(operation_el, {
+      id: "operation",
+      class: "col-sm-9",
+      required: true,
+      get_default: () => "clone",
+      enum: {
+        values: [
+          { key: "clone", value: "Copy Questionnaire" },
+          { key: "export", value: "Export Questionnaire" },
+          { key: "print", value: "Print Questionnaire" },
+        ],
+      },
+      on_change: async (form_input) => {
+        if ("clone" == form_input.get_value()) {
+          name_el.classList.remove("d-none");
+        } else {
+          name_el.classList.add("d-none");
+        }
+      },
+    });
+
+    CN_element_label.append(name_el, { for: "name", value: "Name", class: "col-sm-3" });
+    this.#name_form_input = CN_input_string.append(name_el, {
+      id: "name",
+      class: "col-sm-9",
+      required: true,
+    });
+
+    return body_el;
+  }
+
+  /**
+   * Extend parent method
+   */
+  _create_footer_element() {
+    const footer_el = this.constructor.html(`
+      <div class="d-flex w-100">
+        <div class="me-auto btn-group" role="group" name="right-btn-group"></div>
+        <div class="btn-group" role="group" name="left-btn-group">
+          <button name="cancel" type="button" class="btn btn-light btn-outline-primary">Cancel</button>
+          <button name="proceed" type="button" class="btn btn-primary">Proceed</button>
+        </div>
+      </div>
+    `);
+
+    footer_el.querySelector("button[name=cancel]").addEventListener(
+      "click",
+      this.on_navigate_to_parent.bind(this)
+    );
+
+    footer_el.querySelector("button[name=proceed]").addEventListener("click", async () => {
+      const operation = this.#operation_form_input.get_value();
+      const qnaire_id = this.get_model().get_identifier();
+
+      // make sure the name is set when cloning
+      if ("clone" == operation && !await this.#name_form_input.validate()) return;
+
+      try {
+        await this.constructor.wait_for(async () => {
+          if ("clone" == operation) {
+            const response = await CN_api.post(`qnaire?clone=${qnaire_id}`, {
+              name: this.#name_form_input.get_value()
+            });
+            await CN_session.navigate_to(this.get_model().get_view_url(response));
+          } else if ("export" == operation) {
+            const response = await CN_api.file(
+              `qnaire/${qnaire_id}`,
+              "application/json",
+              { output: "export" },
+              true
+            );
+            CN_common.download_file(await response.blob(), `${this.#qnaire_name}.json`);
+          } else if ("print" == operation) {
+            const response = await CN_api.file(
+              `qnaire/${qnaire_id}`,
+              "text/plain",
+              { output: "print" },
+              true
+            );
+            CN_common.download_file(
+              await response.blob(),
+              response.headers.get('content-disposition').match(/filename=(.*);/)[1],
+            );
+          }
+        }, 0);
+      } catch (error) {
+        if (CN_common.is_uri_error(error, 409)) {
+          this.#name_form_input.show_error("Conflicts with existing record", 0);
+        } else {
+          throw error;
+        }
+      }
+    });
+
+    return footer_el;
+  }
+}
+
+export class CN_list_qnaire extends CN_action_list {
+  /**
+   * Extends the parent method
+   */
+  _create_footer_element() {
+    const footer_el = super._create_footer_element();
+
+    const import_btn_el = this.constructor.html(
+      '<button name="import" type="button" class="btn btn-light btn-outline-primary">Import</button>'
+    );
+    footer_el.querySelector("div.btn-group").append(import_btn_el);
+    import_btn_el.addEventListener("click", async () => {
+      const file = await CN_modal_input.create_and_open({
+        title: "Import Questionnaire",
+        message: "Please provide a JSON (.json) file containing an exported Pine Questionnaire",
+        input: {
+          type: "file",
+          file: {
+            encoding: "text",
+            mime_type: "application/json",
+          },
+          required: true,
+        }
+      });
+
+      if (!file) return;
+
+      try {
+        await this.constructor.wait_for(async () => {
+          const response = await CN_api.post("qnaire?import=1", file, true);
+          await CN_session.navigate_to(this.get_model().get_view_url(response));
+        }, 0);
+      } catch (error) {
+        throw error;
+      }
+    });
+
+    return footer_el;
   }
 }
 
@@ -303,5 +508,43 @@ export class CN_view_qnaire extends CN_action_view {
 
     if (!this.#qnaire_navigator) this.#qnaire_navigator = CN_element_qnaire_navigator.prepend(this.get_element());
     this.#qnaire_navigator.update_element();
+  }
+
+  /**
+   * Extends the parent method
+   */
+  _create_footer_element() {
+    const footer_el = super._create_footer_element();
+
+    const left_btn_group_el = footer_el.querySelector("div[name=left-btn-group]");
+
+    const preview_btn_el = this.constructor.html(
+      '<button name="preview" type="button" class="btn btn-light btn-outline-primary">Preview</button>'
+    );
+    left_btn_group_el.append(preview_btn_el);
+    preview_btn_el.addEventListener(
+      "click",
+      () => CN_session.navigate_to(`page/render/${this.get_property_value("first_page_id")}`),
+    );
+
+    const export_btn_el = this.constructor.html(
+      '<button name="export" type="button" class="btn btn-light btn-outline-primary">Export</button>'
+    );
+    left_btn_group_el.append(export_btn_el);
+    export_btn_el.addEventListener(
+      "click",
+      () => CN_session.navigate_to(`qnaire/clone/${this.get_model().get_identifier()}`),
+    );
+
+    const patch_btn_el = this.constructor.html(
+      '<button name="patch" type="button" class="btn btn-light btn-outline-primary">Patch</button>'
+    );
+    left_btn_group_el.append(patch_btn_el);
+    patch_btn_el.addEventListener(
+      "click",
+      () => CN_session.navigate_to(`qnaire/patch/${this.get_model().get_identifier()}`),
+    );
+
+    return footer_el;
   }
 }
