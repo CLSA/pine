@@ -1,4 +1,5 @@
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_model_problem_report extends CN_base_model {
   constructor() {
@@ -9,8 +10,16 @@ export class CN_model_problem_report extends CN_base_model {
         posessive: "problem report's",
       },
       columns: {
-        questionnaire: { title: "Questionnaire", column: "qnaire.name" },
-        uid: { title: "Participant", column: "participant.uid" },
+        questionnaire: {
+          title: "Questionnaire",
+          column: "qnaire.name",
+          is_hidden: () => "problem_report" != CN_session.get_leaf_model().get_name(),
+        },
+        uid: {
+          title: "Participant",
+          column: "participant.uid",
+          is_hidden: () => "problem_report" != CN_session.get_leaf_model().get_name(),
+        },
         page_name: { title: "Page" },
         datetime: { title: "Date & Time", column: "problem_report.datetime", type: "datetime" },
         description: { title: "Description", align: "left" },

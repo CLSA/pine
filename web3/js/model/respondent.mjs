@@ -1,3 +1,4 @@
+const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 import { CN_model_participant } from "./participant.mjs";
@@ -32,7 +33,7 @@ export class CN_model_respondent extends CN_base_model {
           title: "Responses",
           is_hidden: () => this.get_parent_model().get_action().get_property_value_for_record("repeated"),
         },
-        status: { title: "Status", highlight: "In Progress", table_prefix: false },
+        status: { title: "Status", table_prefix: false },
         qnaire_progress: {
           title: "Progress",
           table_prefix: false,
@@ -168,17 +169,31 @@ export class CN_view_respondent extends CN_action_view {
    * Extend parent method
    */
   get_selector_child_list() {
-    const parent_action = this.get_model().get_parent_model().get_action();
-    const repeated = parent_action.get_property_value_for_record("repeated");
-    const stages = parent_action.get_property_value("stages");
-    const has_devices = parent_action.get_property_value("has_devices");
-    const sends_mail = parent_action.get_property_value("sends_mail");
-    return super.get_selector_child_list().filter(child => 
+    const qnaire_action = this.get_model().get_parent_model().get_action();
+    const repeated = qnaire_action.get_property_value_for_record("repeated");
+    const stages = qnaire_action.get_property_value("stages");
+    const has_devices = qnaire_action.get_property_value("has_devices");
+    const sends_mail = qnaire_action.get_property_value("sends_mail");
+    return super.get_selector_child_list().filter(child =>
       ("response" == child.model.get_name() && null != repeated) ||
       ("respondent_mail" == child.model.get_name() && sends_mail) ||
       ("response_stage" == child.model.get_name() && null == repeated && stages) ||
       ("response_attribute" == child.model.get_name() && null == repeated) ||
       ("answer_device" == child.model.get_name() && null == repeated && has_devices)
     );
+  }
+}
+
+export class CN_list_respondent extends CN_action_list {
+  /**
+   * Extend parent method
+   */
+  _create_column_element(col_name, column, record) {
+    const el = super._create_column_element(col_name, column, record);
+
+    // highlight the active row
+    if ("In Progress" == record.status) el.style.background = "rgb(255, 242, 174)";
+
+    return el;
   }
 }

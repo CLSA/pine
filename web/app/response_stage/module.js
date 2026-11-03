@@ -18,6 +18,7 @@ cenozoApp.defineModule({
         stage_rank: {
           title: "Rank",
           column: "stage.rank",
+          type: "rank",
         },
         stage_name: {
           title: "Name",

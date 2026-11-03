@@ -1,4 +1,6 @@
+const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 
 export class CN_model_response extends CN_base_model {
   constructor() {
@@ -60,5 +62,33 @@ export class CN_model_response extends CN_base_model {
         comments: { title: "Comments", type: "text" },
       },
     });
+  }
+}
+
+export class CN_view_response extends CN_action_view {
+  /**
+   * Extend parent method
+   */
+  async get_text(type) {
+    if ("crumb" == type) {
+      return CN_common.ordinal_suffix(this.get_property_value("rank"));
+    }
+    return await super.get_text(type);
+  }
+
+  /**
+   * Extend parent method
+   */
+  get_selector_child_list() {
+    const qnaire_action = this.get_model().get_root_model().get_action();
+    const stages = qnaire_action.get_property_value("stages");
+    const has_devices = qnaire_action.get_property_value("has_devices");
+    return super.get_selector_child_list().filter(child =>
+      (!["response_stage", "answer_device"].includes(child.model.get_name())) ||
+      // show stage list if the qnaire has stages
+      ("response_stage" == child.model.get_name() && stages) ||
+      // show device list if the qnaire has devices and the qnaire is only answered once
+      ("answer_device" == child.model.get_name() && has_devices)
+    );
   }
 }
