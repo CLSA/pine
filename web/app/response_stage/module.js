@@ -47,7 +47,6 @@ cenozoApp.defineModule({
         },
         elapsed: {
           title: "Elapsed",
-          type: "seconds"
         },
         comments: {
           title: "Comments",

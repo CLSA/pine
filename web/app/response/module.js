@@ -52,7 +52,6 @@ cenozoApp.defineModule({
         },
         time_spent: {
           title: "Time Spent",
-          type: "seconds",
         },
         start_datetime: {
           column: "response.start_datetime",

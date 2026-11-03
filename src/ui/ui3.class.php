@@ -130,7 +130,7 @@ class ui3 extends \cenozo\ui\ui3
       $qnaire_module->add_child( 'qnaire_report' );
       $qnaire_module->add_child( 'question' );
       $qnaire_module->add_child( 'reminder' );
-      //$qnaire_module->add_child( 'respondent' );
+      $qnaire_module->add_child( 'respondent' );
       $qnaire_module->add_child( 'stage' );
       $qnaire_module->add_action( 'clone', '/{identifier}' );
       $qnaire_module->add_action( 'get_respondent', '/{identifier}' );
@@ -211,20 +211,24 @@ class ui3 extends \cenozo\ui\ui3
         $module->add_action( 'reassign' );
 
       // add response children and actions here in case the qnaire is only done once
+      /*
       $module->add_child( 'response_stage' );
       $module->add_child( 'response_attribute' );
       $module->add_child( 'answer_device' );
       $module->add_child( 'problem_report' );
+      */
       $module->add_action( 'display', '/{identifier}' );
     }
 
     $module = $this->get_module( 'response' );
     if( !is_null( $module ) )
     {
+      /*
       $module->add_child( 'response_stage' );
       $module->add_child( 'response_attribute' );
       $module->add_child( 'answer_device' );
       $module->add_child( 'problem_report' );
+      */
       $module->add_action( 'display', '/{identifier}' );
     }
 
@@ -254,12 +258,9 @@ class ui3 extends \cenozo\ui\ui3
     $module = $this->get_module( 'question' );
     if( !is_null( $module ) )
     {
-      /*
       $module->add_child( 'answer' );
       $module->add_child( 'question_description' );
-      */
       $module->add_child( 'question_option' );
-      /*
       $module->add_child( 'qnaire_participant_trigger' );
       $module->add_child( 'qnaire_collection_trigger' );
       $module->add_child( 'qnaire_consent_type_trigger' );
@@ -269,7 +270,6 @@ class ui3 extends \cenozo\ui\ui3
       $module->add_child( 'qnaire_equipment_type_trigger' );
       $module->add_action( 'clone', '/{identifier}' );
       $module->add_action( 'chart', '/{identifier}' );
-      */
     }
 
     $module = $this->get_module( 'question_option' );

@@ -83,6 +83,12 @@ class module extends \cenozo\service\module
     $db_qnaire = $this->get_resource();
     if( !is_null( $db_qnaire ) )
     {
+      if( $select->has_column( 'has_devices' ) )
+        $select->add_constant( 0 < $db_qnaire->get_device_count(), 'has_devices', 'boolean' );
+
+      if( $select->has_column( 'sends_mail' ) )
+        $select->add_constant( $db_qnaire->sends_mail(), 'sends_mail', 'boolean' );
+
       if( $select->has_column( 'anonymous_url' ) )
       {
         $select->add_constant(

@@ -269,6 +269,8 @@ export class CN_model_qnaire extends CN_base_model {
             },
           },
         },
+        has_devices: { meta: {}, type: "boolean", is_hidden: () => true },
+        sends_mail: { meta: {}, type: "boolean", is_hidden: () => true },
       },
     });
   }
