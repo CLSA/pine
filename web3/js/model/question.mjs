@@ -177,11 +177,11 @@ export class CN_model_question extends CN_model_base_qnaire_part {
             }],
           },
           modifier: {
-            where: {
+            where: [{
               column: "question.name",
               operator: "like",
               value: `%${value}%`,
-            },
+            }],
             order: 'CONCAT( question.name, " (", question.type, ")" )',
             limit: 20,
           },

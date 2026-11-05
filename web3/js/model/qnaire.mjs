@@ -4,11 +4,14 @@ const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_base_action } = await import(`${CENOZO_URL}/js/action/base_action.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
+const { CN_element_card } = await import(`${CENOZO_URL}/js/element/card.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 import { CN_element_qnaire_navigator } from "../element/qnaire_navigator.mjs"
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/input/enum.mjs`);
+const { CN_input_file } = await import(`${CENOZO_URL}/js/input/file.mjs`);
 const { CN_input_string } = await import(`${CENOZO_URL}/js/input/string.mjs`);
 const { CN_modal_input } = await import(`${CENOZO_URL}/js/modal/input.mjs`);
+const { CN_modal_message } = await import(`${CENOZO_URL}/js/modal/message.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_model_qnaire extends CN_base_model {
@@ -329,9 +332,9 @@ export class CN_clone_qnaire extends CN_base_action {
    */
   _create_body_element() {
     const body_el = this.constructor.html(`
-      <div class="container-fluid text-info-emphasis">
+      <div class="text-info-emphasis">
         <div class="pb-2">
-          This utility can be used to copy, export or print the "${this.#qnaire_name}" questionnaire.
+          This utility can be used to copy, export or print the questionnaire.
         </div>
         <div name="operation" class="row py-1"></div>
         <div name="name" class="row py-1"></div>
@@ -472,6 +475,229 @@ export class CN_list_qnaire extends CN_action_list {
           const response = await CN_api.post("qnaire?import=1", file, true);
           await CN_session.navigate_to(this.get_model().get_view_url(response));
         }, 0);
+      } catch (error) {
+        throw error;
+      }
+    });
+
+    return footer_el;
+  }
+}
+
+export class CN_patch_qnaire extends CN_base_action {
+  #qnaire_name = null;
+  #operation_form_input;
+  #differences = null;
+  #patch_file = null;
+
+  constructor(parent_el, model) {
+    super("patch", parent_el, model);
+  }
+
+  /**
+   * Extend parent method
+   */
+  async get_text(type) {
+    if ("crumb" == type) {
+      return `${this.#qnaire_name}: Patch`;
+    }
+
+    if ("header" == type) {
+      return `Patch "${this.#qnaire_name}" Questionnaire`;
+    }
+
+    return await super.get_text(type);
+  }
+
+  /**
+   * Extend parent method
+   */
+  async on_navigate_to_parent() {
+    await CN_session.navigate_to(this.get_model().get_view_url());
+  }
+
+  /**
+   * Extend parent method
+   */
+  async on_load() {
+    const response = await CN_api.get(this.get_model().get_view_url(null, "api"), {
+      select: { column: "name" }
+    });
+    this.#qnaire_name = response.name;
+  }
+
+  /**
+   * Extend parent method
+   */
+  update_element() {
+    super.update_element();
+
+    function add_group(parent_el, top_group, header, body = null) {
+      const card = CN_element_card.append(parent_el, {
+        class: top_group ? "mt-2" : "",
+        header: header,
+        body: body,
+      });
+      const card_el = card.get_element();
+      const card_header_el = card_el.querySelector("div.card-header");
+      const card_body_el = card_el.querySelector("div.card-body");
+
+      card_el.classList.remove("container-fluid");
+      card_el.classList.remove("mb-2");
+      card_header_el.classList.remove("text-bg-primary");
+      card_header_el.classList.add(`text-bg-${top_group ? "secondary" : "light"}`);
+
+      return card.get_element();
+    }
+
+    function add_prop(parent_el, property, value) {
+      const title = CN_common.uc_words(property.replace(/_/g, " ")).replace(/^Qnaire /, "");
+      const row_el = CN_base_action.html('<div class="row"></div>');
+      CN_element_label.append(row_el, { value: title, class: "col-3 pt-0 pb-1" });
+      row_el.append(CN_base_action.html(`
+        <div class="col-9">
+          ${
+            null == value ? "(empty)" :
+            CN_common.is_boolean(value) ? (value ? "Yes" : "No") :
+            value
+          }
+        </div>
+      `));
+      parent_el.append(row_el);
+    }
+
+    function add_diffs(parent_el, diffs) {
+      for (const property in diffs) {
+        const diff = diffs[property];
+        if (CN_common.is_object(diff)) {
+          const title = CN_common.uc_words(property.replace(/_/g, " ")).replace(/^Qnaire /, "");
+          parent_el.append(CN_base_action.html(`<div class="mt-3 fw-bold">${title}</div>`));
+
+          if (diff.add) {
+            const op_group = add_group(parent_el, false, "ADD:", "");
+            op_group.querySelector("div.card-header").classList.remove("fs-5");
+            const op_parent_el = op_group.querySelector("div.card-body");
+            diff.add.forEach(item => Object.keys(item).forEach(p => add_prop(op_parent_el, p, item[p])));
+          }
+
+          if (diff.change) {
+            for (const p in diff.change) {
+              const op_group = add_group(parent_el, false, `CHANGE: ${p}`, "");
+              op_group.querySelector("div.card-header").classList.remove("fs-5");
+              add_diffs(op_group.querySelector("div.card-body"), diff.change[p]);
+            }
+          }
+
+          if (diff.remove) {
+            const op_group = add_group(parent_el, false, `REMOVE: ${diff.remove.join(", ")}`);
+            op_group.querySelector("div.card-header").classList.remove("fs-5");
+          }
+        } else {
+          add_prop(parent_el, property, diff);
+        }
+      }
+    }
+
+    this.constructor.set_disabled(
+      this.get_footer_element().querySelector("button[name=proceed]"),
+      null == this.#differences || 0 == Object.keys(this.#differences).length
+    );
+
+    const differences_el = this.get_body_element().querySelector("div[name=differences]");
+
+    differences_el.innerHTML = "";
+    if (CN_common.is_object(this.#differences)) {
+      const group = add_group(differences_el, true, "Patch Summary", "");
+      const group_body_el = group.querySelector("div.card-body");
+
+      if (0 == Object.keys(this.#differences).length) {
+        group_body_el.innerHTML = "No differences found.";
+      } else {
+        add_diffs(group_body_el, this.#differences);
+      }
+    }
+  }
+
+  /**
+   * Extend parent method
+   */
+  _create_body_element() {
+    const body_el = this.constructor.html(`
+      <div class="text-info-emphasis">
+        <div name="operation" class="row py-1"></div>
+        <div name="differences"></div>
+      </div>
+    `);
+
+    const operation_el = body_el.querySelector("div[name=operation]");
+    const name_el = body_el.querySelector("div[name=name]");
+
+    CN_element_label.append(operation_el, { for: "operation", value: "Patch File", class: "col-sm-3" });
+    this.#operation_form_input = CN_input_file.append(operation_el, {
+      id: "operation",
+      class: "col-sm-9",
+      required: true,
+      file: {
+        encoding: "text",
+        mime_type: "application/json",
+      },
+      hide_download: true,
+      on_change: async (form_input) => {
+        try {
+          await this.constructor.wait_for(async () => {
+            this.#patch_file = await CN_common.convert_from_blob("text", form_input.get_value()[0]);
+            this.#differences = await CN_api.patch(
+              `${this.get_model().get_view_url(null, "api")}?patch=check`,
+              this.#patch_file,
+              true
+            );
+          });
+        } catch (error) {
+          this.#patch_file = null;
+          this.#differences = null;
+          throw error;
+        } finally {
+          this.update_element();
+        }
+      },
+    });
+
+    return body_el;
+  }
+
+  /**
+   * Extend parent method
+   */
+  _create_footer_element() {
+    const footer_el = this.constructor.html(`
+      <div class="d-flex w-100">
+        <div class="me-auto btn-group" role="group" name="right-btn-group"></div>
+        <div class="btn-group" role="group" name="left-btn-group">
+          <button name="cancel" type="button" class="btn btn-light btn-outline-primary">Cancel</button>
+          <button name="proceed" type="button" class="btn btn-primary">Proceed</button>
+        </div>
+      </div>
+    `);
+
+    footer_el.querySelector("button[name=cancel]").addEventListener(
+      "click",
+      this.on_navigate_to_parent.bind(this)
+    );
+
+    footer_el.querySelector("button[name=proceed]").addEventListener("click", async () => {
+      const operation = this.#operation_form_input.get_value();
+      const qnaire_id = this.get_model().get_identifier();
+
+      // make sure the name is set when cloning
+      try {
+        await this.constructor.wait_for(async () => {
+          this.#differences = await CN_api.patch(
+            `${this.get_model().get_view_url(null, "api")}?patch=apply`,
+            this.#patch_file,
+            true
+          );
+        });
+        CN_session.navigate_to(this.get_model().get_view_url());
       } catch (error) {
         throw error;
       }

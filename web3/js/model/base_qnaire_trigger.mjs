@@ -1,6 +1,7 @@
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 import { CN_model_question } from "./question.mjs"
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_model_base_qnaire_trigger extends CN_base_model {
   constructor(type) {
@@ -15,10 +16,6 @@ export class CN_model_base_qnaire_trigger extends CN_base_model {
         question_id: {
           title: "Question",
           type: "typeahead",
-          typeahead: CN_model_question.get_typeahead(),
-          // TODO: is this needed?
-          // don't include the question_id when we're adding from a question already
-          //is_hidden: () => "question" == this.get_parent_model().get_name(),
         },
         answer_value: { title: "Required Answer" },
       },
@@ -37,5 +34,26 @@ export class CN_model_base_qnaire_trigger extends CN_base_model {
       },
       properties: properties,
     });
+  }
+
+  /**
+   * Extend parent method
+   */
+  async clone_properties() {
+    const properties = await super.clone_properties();
+    properties.question_id.typeahead = CN_model_question.get_typeahead({
+      modifier: {
+        where: [{
+          column: "qnaire.id",
+          operator: "=",
+          value: CN_session.get_root_model().get_identifier(),
+        }, {
+          column: "question.type",
+          operator: "!=",
+          value: "comment",
+        }]
+      },
+    });
+    return properties;
   }
 }
