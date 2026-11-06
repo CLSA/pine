@@ -37,7 +37,7 @@ class module extends \cenozo\service\module
       $modifier->group( 'response_stage.id' );
 
       $select->add_column(
-        $response_stage_class_name::get_elapsed_column(),
+        sprintf( 'SEC_TO_TIME( ROUND( %s ) )', $response_stage_class_name::get_elapsed_column() ),
         'elapsed',
         false
       );
