@@ -1,4 +1,8 @@
-import { CN_model_base_qnaire_part } from "./base_qnaire_part.mjs"
+import {
+  CN_model_base_qnaire_part,
+  CN_clone_base_qnaire_part,
+  CN_view_base_qnaire_part
+} from "./base_qnaire_part.mjs";
 
 export class CN_model_question_option extends CN_model_base_qnaire_part {
   constructor() {
@@ -78,3 +82,6 @@ export class CN_model_question_option extends CN_model_base_qnaire_part {
     };
   }
 }
+
+export class CN_clone_question_option extends CN_clone_base_qnaire_part {}
+export class CN_view_question_option extends CN_view_base_qnaire_part {}

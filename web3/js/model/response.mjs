@@ -1,6 +1,7 @@
 const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_model_response extends CN_base_model {
   constructor() {
@@ -38,7 +39,7 @@ export class CN_model_response extends CN_base_model {
           is_constant: () => true,
           is_hidden: () =>
             "view" != this.get_action_name() ||
-            !this.get_root_model().get_action().get_property_value("stages"),
+            !CN_session.get_root_model().get_action().get_property_value("stages"),
         },
         language_id: {
           meta: { table: "response", column: "language_id" },
@@ -80,7 +81,7 @@ export class CN_view_response extends CN_action_view {
    * Extend parent method
    */
   get_selector_child_list() {
-    const qnaire_action = this.get_model().get_root_model().get_action();
+    const qnaire_action = CN_session.get_root_model().get_action();
     const stages = qnaire_action.get_property_value("stages");
     const has_devices = qnaire_action.get_property_value("has_devices");
     return super.get_selector_child_list().filter(child =>

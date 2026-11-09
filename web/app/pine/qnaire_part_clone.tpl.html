@@ -25,7 +25,14 @@
           ng-model="model.operation"
           ng-change="model.setOperation()"
           ng-required="true">
-          <option value="move">Move {{ model.typeName }} (the parent {{ model.parentTypeName | lowercase }} will be deleted if it has no remaining {{ model.typeName | lowercase }}s)</option>
+          <option value="move">Move {{ model.typeName }}{{
+            "module" != model.typeName ?
+            " (the parent " +
+            (model.parentTypeName | lowercase) +
+            " will be deleted if it has no remaining " +
+            (model.typeName | lowercase) + "s)" :
+            ""
+          }}</option>
           <option value="clone">Copy {{ model.typeName }}</option>
         </select>
       </div>

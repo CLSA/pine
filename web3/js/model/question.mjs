@@ -1,6 +1,10 @@
 const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
-import { CN_model_base_qnaire_part, CN_view_base_qnaire_part } from "./base_qnaire_part.mjs";
+import {
+  CN_model_base_qnaire_part,
+  CN_clone_base_qnaire_part,
+  CN_view_base_qnaire_part
+} from "./base_qnaire_part.mjs";
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
@@ -89,7 +93,7 @@ export class CN_model_question extends CN_model_base_qnaire_part {
         device_id: {
           title: "Device",
           type: "enum",
-          enum: { path: `${this.get_root_model().get_view_url(null, "api")}/device` },
+          enum: { path: `${CN_session.get_root_model().get_view_url(null, "api")}/device` },
           is_hidden: () =>
             "add" == this.get_action_name() ||
             "device" != this.get_action().get_property_value("type"),
@@ -213,4 +217,5 @@ export class CN_list_question extends CN_action_list {
   }
 }
 
+export class CN_clone_question extends CN_clone_base_qnaire_part {}
 export class CN_view_question extends CN_view_base_qnaire_part {}

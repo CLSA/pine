@@ -1,6 +1,10 @@
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
-import { CN_model_base_qnaire_part, CN_view_base_qnaire_part } from "./base_qnaire_part.mjs";
+import {
+  CN_model_base_qnaire_part,
+  CN_clone_base_qnaire_part,
+  CN_view_base_qnaire_part
+} from "./base_qnaire_part.mjs";
 
 export class CN_model_module extends CN_model_base_qnaire_part {
   constructor() {
@@ -82,4 +86,5 @@ export class CN_model_module extends CN_model_base_qnaire_part {
   }
 }
 
+export class CN_clone_module extends CN_clone_base_qnaire_part {}
 export class CN_view_module extends CN_view_base_qnaire_part {}
