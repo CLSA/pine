@@ -789,15 +789,15 @@ cenozo.service("CnTranslationHelper", [
           pleaseConfirm: { en: "Please confirm", fr: "Veuillez confirmer" },
           notNumber: {
             en: "Invalid Number",
-            fr: "Invalid Number", // TODO: TRANSLATE
+            fr: "Numéro invalide",
           },
           notFloatMessage: {
             en: "Please provide a numerical answer.",
-            fr: "Please provide a numerical answer.", // TODO: TRANSLATE
+            fr: "Veuillez répondre par un chiffre.",
           },
           notIntMessage: {
             en: "Please provide a whole numerical answer (without any decimal places).",
-            fr: "Please provide a whole numerical answer (without any decimal places).", // TODO: TRANSLATE
+            fr: "Veuillez répondre par un nombre entier (sans décimale).",
           },
           minimumTitle: {
             en: "Value is too small",
