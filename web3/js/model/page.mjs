@@ -55,6 +55,7 @@ export class CN_model_page extends CN_model_base_qnaire_part {
         max_time: {
           title: "Max Time (seconds)",
           type: "integer",
+          is_hidden: () => "add" == this.get_action_name(),
           is_constant: () => true,
           help: `
             Maximum page time is automatically calculated to exclude major outliers by setting its value to that
