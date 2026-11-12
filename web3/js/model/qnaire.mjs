@@ -357,13 +357,7 @@ export class CN_clone_qnaire extends CN_base_action {
           { key: "print", value: "Print Questionnaire" },
         ],
       },
-      on_change: async (form_input) => {
-        if ("clone" == form_input.get_value()) {
-          name_el.classList.remove("d-none");
-        } else {
-          name_el.classList.add("d-none");
-        }
-      },
+      on_change: async (form_input) => this.constructor.set_hidden(name_el, "clone" != form_input.get_value()),
     });
 
     CN_element_label.append(name_el, { for: "name", value: "Name", class: "col-sm-3" });

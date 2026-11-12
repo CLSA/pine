@@ -122,46 +122,39 @@ export class CN_clone_base_qnaire_part extends CN_base_action {
     }
   
     // show/hide form inputs
-    if (
-      include_type_list.includes("module") &&
-      this.#form_inputs.qnaire &&
-      this.#form_inputs.qnaire.get_value_for_record()
-    ) {
-      module_row_el.classList.remove("d-none");
-    } else {
-      module_row_el.classList.add("d-none");
-    }
+    this.constructor.set_hidden(
+      module_row_el,
+      !(
+        include_type_list.includes("module") &&
+        this.#form_inputs.qnaire &&
+        this.#form_inputs.qnaire.get_value_for_record()
+      )
+    );
 
-    if (
-      include_type_list.includes("page") &&
-      this.#form_inputs.module &&
-      this.#form_inputs.module.get_value_for_record()
-    ) {
-      page_row_el.classList.remove("d-none");
-    } else {
-      page_row_el.classList.add("d-none");
-    }
+    this.constructor.set_hidden(
+      page_row_el,
+      !(
+        include_type_list.includes("page") &&
+        this.#form_inputs.module &&
+        this.#form_inputs.module.get_value_for_record()
+      )
+    );
 
-    if (
-      include_type_list.includes("question") &&
-      this.#form_inputs.page &&
-      this.#form_inputs.page.get_value_for_record()
-    ) {
-      question_row_el.classList.remove("d-none");
-    } else {
-      question_row_el.classList.add("d-none");
-    }
+    this.constructor.set_hidden(
+      question_row_el,
+      !(
+        include_type_list.includes("question") &&
+        this.#form_inputs.page &&
+        this.#form_inputs.page.get_value_for_record()
+      )
+    );
 
     if (this.#form_inputs[model.get_parent_model().get_name()].get_value_for_record()) {
-      rank_row_el.classList.remove("d-none");
-      if ("copy" == this.#operation_form_input.get_value()) {
-        name_row_el.classList.remove("d-none");
-      } else {
-        name_row_el.classList.add("d-none");
-      }
+      this.constructor.show(rank_row_el);
+      this.constructor.set_hidden(name_row_el, "copy" != this.#operation_form_input.get_value());
     } else {
-      rank_row_el.classList.add("d-none");
-      name_row_el.classList.add("d-none");
+      this.constructor.hide(rank_row_el);
+      this.constructor.hide(name_row_el);
     }
   }
 
@@ -215,9 +208,8 @@ export class CN_clone_base_qnaire_part extends CN_base_action {
 
     for (const name in this.#form_inputs) {
       const id = `${name}_id`;
-      const row_el = this.constructor.html(`
-        <div name="${name}" class="row my-1 ${"qnaire" == name ? "" : "d-none"}"></div>
-      `);
+      const row_el = this.constructor.html(`<div name="${name}" class="row my-1"></div>`);
+      if ("qnaire" != name) this.constructor.hide(row_el);
       let title = CN_common.uc_words("qnaire" == name ? "questionnaire" : name);
 
       CN_element_label.append(row_el, { for: id, value: title, class: "col-sm-3" });
@@ -259,7 +251,8 @@ export class CN_clone_base_qnaire_part extends CN_base_action {
       body_el.append(row_el);
     }
 
-    const rank_row_el = this.constructor.html('<div name="rank" class="row my-1 d-none"></div>');
+    const rank_row_el = this.constructor.html('<div name="rank" class="row my-1"></div>');
+    this.constructor.hide(rank_row_el);
     CN_element_label.append(rank_row_el, { for: "rank", value: "Rank", class: "col-sm-3" });
     this.#rank_form_input = CN_input_rank.append(rank_row_el, {
       id: "rank",
@@ -284,7 +277,8 @@ export class CN_clone_base_qnaire_part extends CN_base_action {
     });
     body_el.append(rank_row_el);
 
-    const name_row_el = this.constructor.html('<div name="name" class="row my-1 d-none"></div>');
+    const name_row_el = this.constructor.html('<div name="name" class="row my-1"></div>');
+    this.constructor.hide(name_row_el);
     CN_element_label.append(name_row_el, { for: "name", value: "New Name", class: "col-sm-3" });
     this.#name_form_input = CN_input_string.append(name_row_el, {
       id: "name",
@@ -333,7 +327,7 @@ export class CN_clone_base_qnaire_part extends CN_base_action {
     );
 
     this.#proceed_btn_el = footer_el.querySelector("button[name=proceed]");
-    this.constructor.set_disabled(this.#proceed_btn_el, true);
+    this.constructor.disable(this.#proceed_btn_el);
     this.#proceed_btn_el.addEventListener("click", async () => {
       const data = { rank: this.#rank_form_input.get_value() };
       data[`${parent_model_name}_id`] = this.#form_inputs[parent_model_name].get_value_for_record();
