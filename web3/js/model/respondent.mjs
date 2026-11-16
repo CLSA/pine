@@ -1,7 +1,11 @@
 const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
+const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_modal_message } = await import(`${CENOZO_URL}/js/modal/message.mjs`);
 import { CN_model_participant } from "./participant.mjs";
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
+
 
 export class CN_model_respondent extends CN_base_model {
   constructor() {
@@ -152,6 +156,27 @@ export class CN_model_respondent extends CN_base_model {
       },
     });
   }
+
+  async export(respondent_id = null) {
+    let response = null;
+    const action = this.get_action();
+    await action.wait_for(async() => {
+      const parent_model = this.get_model().get_parent_model()
+      let path = `respondent${respondent_id ? `/${respondent_id}` : ""}?action=export`;
+      if (parent_model) path = `${parent_model.get_name()}/${parent_model.get_identifier()}/${path}`;
+      response = await (respondent_id ? CN_api.patch(path, {}) : CN_api.post(path, {}));
+    });
+
+    CN_modal_message.create_and_open({
+      title: "Export Complete",
+      message: (
+        respondent_id ? "The respondent has been exported." :
+        0 == response.length ? "No respondents have been exported." :
+        `<div class="pb-2">The following respondents have been exported:</div><div>${response.join(", ")}</div>`
+      ),
+    });
+    await action.run();
+  }
 }
 
 export class CN_view_respondent extends CN_action_view {
@@ -185,6 +210,23 @@ export class CN_view_respondent extends CN_action_view {
 }
 
 export class CN_list_respondent extends CN_action_list {
+  #get_btn_el;
+  #export_btn_el;
+
+  update_element() {
+    super.update_element();
+
+    const parent_model = this.get_model().get_parent_model();
+    if (CN_session.get("setting", "detached") && parent_model) {
+      const parent_action = parent_model.get_action();
+      const hide = (
+        !parent_action.get_property_value("parent_beartooth_url") ||
+        !parent_action.get_property_value("parent_username")
+      );
+      this.constructor.set_hidden(this.#get_btn_el, hide);
+      this.constructor.set_hidden(this.#export_btn_el, hide);
+    }
+  }
   /**
    * Extend parent method
    */
@@ -195,5 +237,80 @@ export class CN_list_respondent extends CN_action_list {
     if ("In Progress" == record.status) el.style.background = "rgb(255, 242, 174)";
 
     return el;
+  }
+
+  /**
+   * Extends the parent method
+   */
+  _create_footer_element() {
+    const footer_el = super._create_footer_element();
+
+    const model = this.get_model();
+    const parent_model = model.get_parent_model()
+
+    if (CN_session.get("setting", "detached")) {
+      this.#get_btn_el = this.constructor.html(`
+        <button name="get" type="button" class="btn btn-light btn-outline-primary">
+          Get Respondents
+        </button>
+      `);
+      this.constructor.hide(this.#get_btn_el);
+      footer_el.querySelector("div.btn-group").append(this.#get_btn_el);
+      this.#get_btn_el.addEventListener("click", async () => {
+        let error_list = [];
+        await this.constructor.wait_for(async() => {
+          let path = "respondent?action=get_respondents";
+          if (parent_model) path = `${parent_model.get_name()}/${parent_model.get_identifier()}/${path}`;
+          const response = await CN_api.post(path, {});
+          error_list = response
+            .filter(result => 0 < result.fail.length)
+            .map(result => `${result.qnaire}: ${result.fail.join(", ")}`);
+        });
+
+        if (0 < error_list.length) {
+          await CN_modal_message.create_and_open({
+            header_class: "text-bg-danger",
+            title: "Problem Importing Respondents",
+            size: "lg",
+            message: `
+              <div class="pb-2">
+                The following respondents could not be imported because there was a problem retrieving
+                the mandatory attributes:
+              </div>
+              <div>
+                ${error_list.join("<br/>\n")}
+              </div>
+            `,
+          });
+        } else {
+          await this.run();
+        }
+      });
+
+      this.#export_btn_el = this.constructor.html(
+        '<button name="export" type="button" class="btn btn-light btn-outline-primary">Export</button>'
+      );
+      this.constructor.hide(this.#export_btn_el);
+      footer_el.querySelector("div.btn-group").append(this.#export_btn_el);
+      this.#export_btn_el.addEventListener("click", () => model.export());
+    } else {
+      const import_btn_el = this.constructor.html(
+        '<button name="import" type="button" class="btn btn-light btn-outline-primary">Import</button>'
+      );
+      footer_el.querySelector("div.btn-group").append(import_btn_el);
+      import_btn_el.addEventListener("click", async () => {
+        CN_session.navigate_to(parent_model.get_view_url(null).replace(/\/view\//, "/import_responses/"));
+      });
+
+      const mass_btn_el = this.constructor.html(
+        '<button name="mass" type="button" class="btn btn-light btn-outline-primary">Mass Respondent</button>'
+      );
+      footer_el.querySelector("div.btn-group").append(mass_btn_el);
+      mass_btn_el.addEventListener("click", async () => {
+        CN_session.navigate_to(parent_model.get_view_url(null).replace(/\/view\//, "/mass_respondent/"));
+      });
+    }
+
+    return footer_el;
   }
 }

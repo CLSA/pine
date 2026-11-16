@@ -169,7 +169,7 @@ export class CN_clone_base_qnaire_part extends CN_base_action {
 
     const body_el = this.constructor.html(`
       <div class="text-info-emphasis">
-        <div class="pb-2">Provide the ${model.get_posessive()} destination:</div>
+        <div class="pb-3">Provide the ${model.get_posessive()} destination:</div>
       </div>
     `);
 

@@ -7,9 +7,11 @@ const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_card } = await import(`${CENOZO_URL}/js/element/card.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 import { CN_element_qnaire_navigator } from "../element/qnaire_navigator.mjs"
+const { CN_input_boolean } = await import(`${CENOZO_URL}/js/input/boolean.mjs`);
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/input/enum.mjs`);
 const { CN_input_file } = await import(`${CENOZO_URL}/js/input/file.mjs`);
 const { CN_input_string } = await import(`${CENOZO_URL}/js/input/string.mjs`);
+const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/modal/confirm.mjs`);
 const { CN_modal_input } = await import(`${CENOZO_URL}/js/modal/input.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/modal/message.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
@@ -333,7 +335,7 @@ export class CN_clone_qnaire extends CN_base_action {
   _create_body_element() {
     const body_el = this.constructor.html(`
       <div class="text-info-emphasis">
-        <div class="pb-2">
+        <div class="pb-3">
           This utility can be used to copy, export or print the questionnaire.
         </div>
         <div name="operation" class="row py-1"></div>
@@ -454,10 +456,7 @@ export class CN_list_qnaire extends CN_action_list {
         message: "Please provide a JSON (.json) file containing an exported Pine Questionnaire",
         input: {
           type: "file",
-          file: {
-            encoding: "text",
-            mime_type: "application/json",
-          },
+          file: { encoding: "text", mime_type: "application/json" },
           required: true,
         }
       });
@@ -472,6 +471,436 @@ export class CN_list_qnaire extends CN_action_list {
       } catch (error) {
         throw error;
       }
+    });
+
+    return footer_el;
+  }
+}
+
+export class CN_import_responses_qnaire extends CN_base_action {
+  #qnaire_name;
+  #tokens_form_input;
+  #file_form_input;
+  #csv_file = null;
+  #confirm_data = null;
+
+  constructor(parent_el, model) {
+    super("import_responses", parent_el, model);
+  }
+
+  /**
+   * Extend parent method
+   */
+  async get_text(type) {
+    if ("crumb" == type) {
+      return `${this.#qnaire_name}: Import Responses`;
+    }
+
+    if ("header" == type) {
+      return `Import Responses for "${this.#qnaire_name}"`;
+    }
+
+    return await super.get_text(type);
+  }
+
+  /**
+   * Extend parent method
+   */
+  async on_navigate_to_parent() {
+    await CN_session.navigate_to(this.get_model().get_view_url(), { tab: "respondent" });
+  }
+
+  /**
+   * Extend parent method
+   */
+  update_element() {
+    super.update_element();
+
+    const total_responses = (
+      CN_common.is_object(this.#confirm_data) ?
+      this.#confirm_data.new_responses + this.#confirm_data.existing_responses :
+      0
+    );
+    this.constructor.set_disabled(
+      this.get_footer_element().querySelector("button[name=proceed]"),
+      null == this.#confirm_data ||
+      0 == total_responses ||
+      0 == this.#confirm_data.valid_column_list.length ||
+      0 < this.#confirm_data.column_errors.length
+    );
+
+    const body_el = this.get_body_element();
+    const confirm_el = this.get_body_element().querySelector("div.card");
+
+    if (CN_common.is_object(this.#confirm_data)) {
+      const card_body_el = confirm_el.querySelector("div.card-body");
+      card_body_el.innerHTML = `
+        <div class="fs-5 ${0 == total_responses ? "text-danger" : ""}">
+          Total new response: ${this.#confirm_data.new_responses}
+        </div>
+        <div class="mt-2 fs-5 ${0 == total_responses ? "text-danger" : ""}">
+          Total pre-existing responses: ${this.#confirm_data.existing_responses}
+        </div>
+        <div class="mt-2" name="valid-columns">
+          <div class="fs-5">Valid Columns</div>
+          <div name="content" class="card">
+          </div>
+        </div>
+        <div name="missing-columns" class="mt-2 d-none">
+          <div class="fs-5">Missing Columns</div>
+          <div name="content" class="card">
+            <div class="card-header bg-warning-subtle">
+              These columns are missing from the CSV file so all answers will be left blank:
+            </div>
+          </div>
+        </div>
+        <div name="invalid-columns" class="mt-2 d-none">
+          <div class="fs-5">Invalid Columns</div>
+          <div name="content" class="card">
+            <div class="card-header bg-warning-subtle">
+              These invalid columns were found in the CSV file and will be ignored:
+            </div>
+          </div>
+        </div>
+        <div name="row-errors" class="mt-2 d-none">
+          <div class="fs-5">Row Errors</div>
+          <div name="content" class="card">
+            <div class="card-header bg-warning">
+              The following ${this.#confirm_data.row_errors.length}
+              row${1 == this.#confirm_data.row_errors.length ? "" : "s"}
+              will not be imported as they contain errors:
+            </div>
+          </div>
+        </div>
+        <div name="column-errors" class="mt-2 d-none">
+          <div class="fs-5">Column Errors</div>
+          <div name="content" class="card">
+            <div class="card-header bg-danger">
+              The following column errors were detected and must be corrected before the data can be uploaded:
+            </div>
+          </div>
+        </div>
+      `;
+
+      const valid_columns_el = card_body_el.querySelector("div[name=valid-columns]");
+      const content_el = valid_columns_el.querySelector("div[name=content]");
+      if (0 == this.#confirm_data.valid_column_list.length) {
+        content_el.innerHTML =
+          '<div class="card-header bg-danger">No valid columns were found.</span>';
+      } else {
+        content_el.innerHTML = (
+          0 == this.#confirm_data.missing_column_list.length ?
+          '<div class="card-header">All possible columns were found in the CSV file and will be imported.</div>' :
+          `
+            <div class="card-header">These valid columns were found in the CSV file and will be imported:</div>
+            <div class="card-body">${this.#confirm_data.valid_column_list.join(", ")}</div>
+          `
+        );
+      }
+
+      if (0 < this.#confirm_data.missing_column_list.length) {
+        const missing_columns_el = card_body_el.querySelector("div[name=missing-columns]");
+        const content_el = missing_columns_el.querySelector("div[name=content]");
+        this.constructor.show(missing_columns_el);
+        content_el.append(this.constructor.html(
+          `<div class="card-body">${this.#confirm_data.missing_column_list.join(", ")}</div>`
+        ));
+      }
+
+      if (0 < this.#confirm_data.invalid_column_list.length) {
+        const invalid_columns_el = card_body_el.querySelector("div[name=invalid-columns]");
+        const content_el = invalid_columns_el.querySelector("div[name=content]");
+        this.constructor.show(invalid_columns_el);
+        content_el.append(this.constructor.html(
+          `<div class="card-body">${this.#confirm_data.invalid_column_list.join(", ")}</div>`
+        ));
+      }
+
+      if (0 < this.#confirm_data.row_errors.length) {
+        const row_errors_el = card_body_el.querySelector("div[name=row-errors]");
+        const content_el = row_errors_el.querySelector("div[name=content]");
+        this.constructor.show(row_errors_el);
+        content_el.append(this.constructor.html(`
+          <div class="card-body">
+            <ul>${this.#confirm_data.row_errors.slice(0, 20).map(error => `<li>${error}</li>`).join("\n")}</ul>
+            ${20 < this.#confirm_data.row_errors.length ? "<br/>(etc...)" : ""}
+          </div>
+        `));
+      }
+
+      if (0 < this.#confirm_data.column_errors.length) {
+        const column_errors_el = card_body_el.querySelector("div[name=column-errors]");
+        const content_el = column_errors_el.querySelector("div[name=content]");
+        this.constructor.show(column_errors_el);
+        this.#confirm_data.column_errors.forEach(error => {
+          content_el.append(this.constructor.html(`
+            <div class="card">
+              <div class="card-header">Column: ${error.column}</div>
+              <div class="card-body">
+                <ul>${this.#confirm_data.row_errors.map(error => `<li>${error}</li>`).join("\n")}</ul>
+              </div>
+            </div>
+          `));
+        });
+      }
+
+      this.constructor.show(confirm_el);
+    } else {
+      this.constructor.hide(confirm_el);
+    }
+  }
+
+  /**
+   * Extend parent method
+   */
+  _create_body_element() {
+    const body_el = this.constructor.html(`
+      <div class="text-info-emphasis">
+        <div class="pb-3">
+          This utility allows you to import response data to the questionnaire.
+          In order to proceed you must provide a CSV file (using UTF-8 encoding if you are importing any special,
+          accented or non-english characters) where each row contains the data for a single response.
+          For a list of possible columns please run the Data Dictionary report for this questionnaire.
+          Note that any question which has no column will show as missing data.
+        </div>
+      </div>
+    `);
+
+    const tokens_el = CN_base_action.html('<div class="row my-1"></div>');
+    CN_element_label.append(tokens_el, { for: "tokens", value: "Preserve Tokens", class: "col-sm-3" });
+    this.#tokens_form_input = CN_input_boolean.append(tokens_el, {
+      id: "tokens",
+      class: "col-sm-9",
+      get_default: () => true,
+      required: true,
+      on_change: async (form_input) => {
+        if (this.#csv_file) {
+          try {
+            this.#confirm_data = await this.#upload_file("confirm");
+          } catch (error) {
+            this.#csv_file = null;
+            this.#confirm_data = null;
+            throw error;
+          } finally {
+            this.update_element();
+          }
+        }
+      },
+    });
+    body_el.append(tokens_el);
+
+    const file_el = CN_base_action.html('<div class="row my-1"></div>');
+    CN_element_label.append(file_el, { for: "file", value: "CSV File", class: "col-sm-3" });
+    this.#file_form_input = CN_input_file.append(file_el, {
+      id: "file",
+      class: "col-sm-9",
+      required: true,
+      file: { encoding: "text", mime_type: "text/csv" },
+      hide_download: true,
+      on_change: async () => {
+        try {
+          this.#confirm_data = await this.#upload_file("confirm");
+        } catch (error) {
+          this.#csv_file = null;
+          this.#confirm_data = null;
+          throw error;
+        } finally {
+          this.update_element();
+        }
+      }
+    });
+    body_el.append(file_el);
+
+    const card_header_el = CN_element_card.append(body_el, {
+      class: "mt-3",
+      header: "Confirm Responses",
+      body: ""
+    }).get_element().querySelector("div.card-header");
+    card_header_el.classList.remove("text-bg-primary");
+    card_header_el.classList.add("text-bg-secondary");
+
+    return body_el;
+  }
+
+  /**
+   * Extend parent method
+   */
+  async on_load() {
+    const response = await CN_api.get(this.get_model().get_view_url(null, "api"), {
+      select: { column: "name" }
+    });
+    this.#qnaire_name = response.name;
+  }
+
+  /**
+   * Extend parent method
+   */
+  _create_footer_element() {
+    const footer_el = this.constructor.html(`
+      <div class="d-flex w-100">
+        <div class="me-auto btn-group" role="group" name="right-btn-group"></div>
+        <div class="btn-group" role="group" name="left-btn-group">
+          <button name="cancel" type="button" class="btn btn-light btn-outline-primary">Cancel</button>
+          <button name="proceed" type="button" class="btn btn-primary">Proceed</button>
+        </div>
+      </div>
+    `);
+
+    footer_el.querySelector("button[name=cancel]").addEventListener(
+      "click",
+      this.on_navigate_to_parent.bind(this)
+    );
+
+    footer_el.querySelector("button[name=proceed]").addEventListener("click", async () => {
+      const new_responses = this.#confirm_data.new_responses;
+      const existing_responses = this.#confirm_data.existing_responses;
+      let mode = false;
+      if (0 < new_responses && 0 < existing_responses) {
+        mode = await CN_modal_input.create_and_open({
+          title: "Import Mode Required",
+          message: `
+            Please specify whether you would like to import all responses or
+            only new responses that do not already exist in the database:
+          `,
+          input: {
+            type: "enum",
+            required: true,
+            get_default: () => "import",
+            enum: {
+              values: [
+                { key: "import", value: "All Responses" },
+                { key: "import_new", value: "New Responses Only" },
+              ],
+            },
+          },
+        });
+      } else {
+        const response = await CN_modal_confirm.create_and_open({
+          message: "Are you sure you wish to import all responses?",
+        });
+        if (response) mode = "import";
+      }
+
+      if (mode) {
+        const response = this.#upload_file(mode);
+        let messages = [];
+        if (0 < new_responses) messages.push(
+          `${new_responses} new response${1 == new_responses ? " has" : "s have"} been imported`
+        );
+        if (0 < existing_responses) messages.push(
+          `${existing_responses} existing response${1 == existing_responses ? " has" : "s have"} been overwritten`
+        );
+
+        await CN_modal_message.create_and_open({
+          title: "Import Complete",
+          message: messages.join(" and ") + ".",
+        });
+        await this.on_navigate_to_parent();
+      }
+    });
+
+    return footer_el;
+  }
+
+  /**
+   * ADD DOCS
+   */
+  async #upload_file(mode) {
+    let response = null;
+    await this.constructor.wait_for(async () => {
+      const tokens = this.#tokens_form_input.get_value_for_record();
+      if ("confirm" == mode) {
+        this.#csv_file = await CN_common.convert_from_blob("text", this.#file_form_input.get_value()[0]);
+      }
+      response = await CN_api.post(
+        `${this.get_model().get_view_url(null, "api")}/response?mode=${mode}&preserve_tokens=${tokens}`,
+        this.#csv_file,
+        true
+      );
+    }, 0);
+    return response;
+  }
+}
+
+export class CN_mass_respondent_qnaire extends CN_base_action {
+  #qnaire_name;
+
+  constructor(parent_el, model) {
+    super("mass_respondent", parent_el, model);
+  }
+
+  /**
+   * Extend parent method
+   */
+  async get_text(type) {
+    if ("crumb" == type) {
+      return `${this.#qnaire_name}: Mass Respondent`;
+    }
+
+    if ("header" == type) {
+      return `Mass Respondent for "${this.#qnaire_name}"`;
+    }
+
+    return await super.get_text(type);
+  }
+
+  /**
+   * Extend parent method
+   */
+  async on_navigate_to_parent() {
+    await CN_session.navigate_to(this.get_model().get_view_url(), { tab: "respondent" });
+  }
+
+  /**
+   * Extend parent method
+   */
+  async on_load() {
+    const response = await CN_api.get(this.get_model().get_view_url(null, "api"), {
+      select: { column: "name" }
+    });
+    this.#qnaire_name = response.name;
+  }
+
+  /**
+   * Extend parent method
+   */
+  _create_body_element() {
+    const body_el = this.constructor.html(`
+      <div class="text-info-emphasis">
+        <div class="pb-3">
+          This utility allows you to create a batch of respondent records for the
+          <span class="fw-bold">${this.#qnaire_name}</span> questionnaire.
+          In order to proceed you must first select which participants to affect.
+          This can be done by typing the unique identifiers (ie: A123456) of all participants you wish to have
+          included in the operation, then confirm that list to ensure each of the identifiers can be linked to
+          a participant.
+        </div>
+      </div>
+    `);
+
+    return body_el;
+  }
+
+  /**
+   * Extend parent method
+   */
+  _create_footer_element() {
+    const footer_el = this.constructor.html(`
+      <div class="d-flex w-100">
+        <div class="me-auto btn-group" role="group" name="right-btn-group"></div>
+        <div class="btn-group" role="group" name="left-btn-group">
+          <button name="cancel" type="button" class="btn btn-light btn-outline-primary">Cancel</button>
+          <button name="proceed" type="button" class="btn btn-primary">Proceed</button>
+        </div>
+      </div>
+    `);
+
+    footer_el.querySelector("button[name=cancel]").addEventListener(
+      "click",
+      this.on_navigate_to_parent.bind(this)
+    );
+
+    footer_el.querySelector("button[name=proceed]").addEventListener("click", async () => {
     });
 
     return footer_el;
@@ -631,10 +1060,7 @@ export class CN_patch_qnaire extends CN_base_action {
       id: "operation",
       class: "col-sm-9",
       required: true,
-      file: {
-        encoding: "text",
-        mime_type: "application/json",
-      },
+      file: { encoding: "text", mime_type: "application/json" },
       hide_download: true,
       on_change: async (form_input) => {
         try {
