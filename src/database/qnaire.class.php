@@ -1625,9 +1625,8 @@ class qnaire extends \cenozo\database\record
     $metadata_columns = [];
     $column_name_list = NULL;
 
-    foreach( preg_split( '/\r\n|\n|\r/', $csv_data ) as $row_index => $line )
+    foreach( util::parse_csv_string( $csv_data ) as $row_index => $row )
     {
-      $row = str_getcsv( $line );
       if( 2 > count( $row ) ) continue;
       if( is_null( $column_name_list ) )
       {
