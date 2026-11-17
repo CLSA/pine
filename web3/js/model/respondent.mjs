@@ -3,9 +3,8 @@ const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/modal/message.mjs`);
-import { CN_model_participant } from "./participant.mjs";
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
-
+import { CN_model_participant } from "./participant.mjs";
 
 export class CN_model_respondent extends CN_base_model {
   constructor() {

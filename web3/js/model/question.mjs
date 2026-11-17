@@ -1,12 +1,12 @@
 const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
+const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 import {
   CN_model_base_qnaire_part,
   CN_clone_base_qnaire_part,
   CN_view_base_qnaire_part
 } from "./base_qnaire_part.mjs";
-const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
-const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_model_question extends CN_model_base_qnaire_part {
   constructor() {

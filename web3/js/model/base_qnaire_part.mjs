@@ -4,11 +4,11 @@ const { CN_base_action } = await import(`${CENOZO_URL}/js/action/base_action.mjs
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
-import { CN_element_qnaire_navigator } from "../element/qnaire_navigator.mjs"
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/input/enum.mjs`);
 const { CN_input_rank } = await import(`${CENOZO_URL}/js/input/rank.mjs`);
 const { CN_input_string } = await import(`${CENOZO_URL}/js/input/string.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
+import { CN_element_qnaire_navigator } from "../element/qnaire_navigator.mjs"
 
 export class CN_model_base_qnaire_part extends CN_base_model {
   constructor(type) {
@@ -120,7 +120,7 @@ export class CN_clone_base_qnaire_part extends CN_base_action {
         if ("question" != model_name) include_type_list.push("question");
       }
     }
-  
+
     // show/hide form inputs
     this.constructor.set_hidden(
       module_row_el,
