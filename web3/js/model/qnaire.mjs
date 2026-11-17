@@ -6,7 +6,7 @@ const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_card } = await import(`${CENOZO_URL}/js/element/card.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
-import { CN_element_qnaire_navigator } from "../element/qnaire_navigator.mjs"
+const { CN_element_participant_selection } = await import(`${CENOZO_URL}/js/element/participant_selection.mjs`);
 const { CN_input_boolean } = await import(`${CENOZO_URL}/js/input/boolean.mjs`);
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/input/enum.mjs`);
 const { CN_input_file } = await import(`${CENOZO_URL}/js/input/file.mjs`);
@@ -15,6 +15,7 @@ const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/modal/confirm.mjs`);
 const { CN_modal_input } = await import(`${CENOZO_URL}/js/modal/input.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/modal/message.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
+import { CN_element_qnaire_navigator } from "../element/qnaire_navigator.mjs"
 
 export class CN_model_qnaire extends CN_base_model {
   constructor() {
@@ -824,6 +825,10 @@ export class CN_import_responses_qnaire extends CN_base_action {
 
 export class CN_mass_respondent_qnaire extends CN_base_action {
   #qnaire_name;
+  #participant_selection = new CN_element_participant_selection(null, {
+    path: `${this.get_model().get_view_url(null, "api")}/participant`,
+    data: { mode: "confirm" },
+  });
 
   constructor(parent_el, model) {
     super("mass_respondent", parent_el, model);
@@ -855,9 +860,10 @@ export class CN_mass_respondent_qnaire extends CN_base_action {
    * Extend parent method
    */
   async on_load() {
-    const response = await CN_api.get(this.get_model().get_view_url(null, "api"), {
-      select: { column: "name" }
-    });
+    const [reset, response] = await Promise.all([
+      this.#participant_selection.reset(),
+      CN_api.get(this.get_model().get_view_url(null, "api"), { select: { column: "name" } }),
+    ]);
     this.#qnaire_name = response.name;
   }
 
@@ -868,15 +874,45 @@ export class CN_mass_respondent_qnaire extends CN_base_action {
     const body_el = this.constructor.html(`
       <div class="text-info-emphasis">
         <div class="pb-3">
-          This utility allows you to create a batch of respondent records for the
-          <span class="fw-bold">${this.#qnaire_name}</span> questionnaire.
+          This utility allows you to create a batch of respondent records for the questionnaire.
           In order to proceed you must first select which participants to affect.
           This can be done by typing the unique identifiers (ie: A123456) of all participants you wish to have
           included in the operation, then confirm that list to ensure each of the identifiers can be linked to
           a participant.
         </div>
+        <div name="participant-list" class="py-1"></div>
+        <div name="participant-confirm" class="py-1 d-none"></div>
       </div>
     `);
+
+    CN_element_card.append(body_el.querySelector("[name=participant-confirm]"), {
+      header: "Confirm Selection",
+      body: "",
+    });
+
+    this.#participant_selection.add_event_listener("selectionchanged", () => {
+      const proceed_btn_el = this.get_footer_element().querySelector("button[name=proceed]");
+      const confirm_el = body_el.querySelector("[name=participant-confirm]");
+      const summary_el = confirm_el.querySelector("div.card-body");
+      summary_el.innerHTML = "";
+      const count = this.#participant_selection.get_identifier_list().length;
+      if (0 < count) {
+        summary_el.innerHTML = `
+           You have selected a total of ${count} new participants to make respondents for this questionnaire.
+            If you wish to proceed you may click the "Proceed" button below, or you may make changes to the
+            participant selection list above.
+        `;
+        this.constructor.show(confirm_el);
+        this.constructor.enable(proceed_btn_el);
+      } else {
+        this.constructor.hide(confirm_el);
+        this.constructor.disable(proceed_btn_el);
+      }
+    });
+
+    const participant_list_el = body_el.querySelector("[name=participant-list]");
+    this.#participant_selection.set_parent_element(participant_list_el);
+    participant_list_el.append(this.#participant_selection.get_element());
 
     return body_el;
   }
@@ -900,7 +936,35 @@ export class CN_mass_respondent_qnaire extends CN_base_action {
       this.on_navigate_to_parent.bind(this)
     );
 
-    footer_el.querySelector("button[name=proceed]").addEventListener("click", async () => {
+    const proceed_btn_el = footer_el.querySelector("button[name=proceed]");
+    this.constructor.disable(proceed_btn_el);
+    proceed_btn_el.addEventListener("click", async () => {
+      const identifier_list = this.#participant_selection.get_identifier_list();
+      const response = await CN_api.post(`${this.get_model().get_view_url(null, "api")}/participant`, {
+        mode: "create",
+        identifier_id: this.#participant_selection.get_idtype(),
+        identifier_list: identifier_list,
+      });
+
+      let message = `
+        You have successfully created ${response.success.length} out of ${identifier_list.length}
+        new recipients for the "${this.#qnaire_name}" questionnaire.
+      `;
+
+      if (0 < response.fail.length) {
+        message += `
+          <br/>
+          <br/>
+          Note that the following recipients were not created due to errors:<br/>
+          ${response.fail.join(", ")}
+        `;
+      }
+
+      await CN_modal_message.create_and_open({
+        title: "Respondents Created",
+        message: message,
+      });
+      await this.on_navigate_to_parent();
     });
 
     return footer_el;
