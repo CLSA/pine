@@ -114,7 +114,8 @@ cenozoApp.defineModule({
       token: {
         title: "Token (Interview ID)",
         type: "string",
-        format: "identifier",
+        regex: "^[a-zA-Z0-9_-]+$",
+        help: "Must be letters, numbers, underscores (_) and dashes (-) only",
         isExcluded: "add",
       },
       status: {
