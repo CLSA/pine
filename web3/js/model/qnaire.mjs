@@ -64,7 +64,6 @@ export class CN_model_qnaire extends CN_base_model {
       properties: {
         name: {
           title: "Name",
-          format: "identifier",
           is_constant: () => "view" == this.get_action_name() && this.get_action().get_property_value("readonly"),
         },
         version: {

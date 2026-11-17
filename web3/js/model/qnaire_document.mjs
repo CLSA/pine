@@ -18,7 +18,7 @@ export class CN_model_qnaire_document extends CN_base_model {
       },
       get_default_order: () => "language.code",
       properties: {
-        name: { title: "Name", format: "identifier" },
+        name: { title: "Name" },
         data: {
           title: "PDF File",
           type: "file",

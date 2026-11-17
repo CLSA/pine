@@ -37,7 +37,7 @@ export class CN_model_stage extends CN_base_model {
             action.update_element();
           },
         },
-        name: { title: "Name", format: "identifier" },
+        name: { title: "Name" },
         order_deviation: { title: "Require Order Deviation", type: "boolean" },
         skip_deviation: { title: "Require Skip Deviation", type: "boolean" },
         precondition: {

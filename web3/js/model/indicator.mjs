@@ -19,7 +19,7 @@ export class CN_model_indicator extends CN_base_model {
           is_hidden: () => "add" == this.get_action_name(),
           is_constant: () => true,
         },
-        name: { title: "Name", format: "identifier" },
+        name: { title: "Name" },
       },
     });
   }

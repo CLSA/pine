@@ -19,7 +19,7 @@ export class CN_model_device extends CN_base_model {
         form: { title: "Is Form", column: "device.form", type: "boolean" },
       },
       properties: {
-        name: { title: "Name", format: "identifier" },
+        name: { title: "Name" },
         url: { title: "URL" },
         emulate: { title: "Emulate Mode", type: "boolean" },
         form: {

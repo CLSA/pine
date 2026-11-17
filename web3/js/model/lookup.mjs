@@ -19,7 +19,7 @@ export class CN_model_lookup extends CN_base_model {
         description: { title: "Description" },
       },
       properties: {
-        name: { title: "Name", format: "identifier" },
+        name: { title: "Name" },
         version: { title: "Version" },
         description: { title: "Description", type: "text" },
       },

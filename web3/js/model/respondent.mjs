@@ -69,7 +69,8 @@ export class CN_model_respondent extends CN_base_model {
         },
         token: {
           title: "Token (Interview ID)",
-          format: "identifier",
+          format: "alpha_-num",
+          help: "Must be letters, numbers, underscores (_) and dashes (-) only",
           is_hidden: () => "add" == this.get_action_name(),
         },
         status: {

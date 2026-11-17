@@ -38,7 +38,7 @@ export class CN_model_deviation_type extends CN_base_model {
             );
           },
         },
-        name: { title: "Name", format: "identifier" },
+        name: { title: "Name" },
         other: {
           title: "Other",
           type: "boolean",

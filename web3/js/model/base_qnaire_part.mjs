@@ -30,7 +30,7 @@ export class CN_model_base_qnaire_part extends CN_base_model {
         rank: { title: "Rank", type: "rank", },
         name: {
           title: "Name",
-          format: "module" == type ? "identifier" : "question_option" == type ? "alpha_num" : "",
+          format: "question_option" == type ? "alpha_num" : null,
           regex: ["page","question"].includes(type) ? "^[a-zA-Z_][a-zA-Z0-9_]*$" : "",
         },
         precondition: {
@@ -294,7 +294,7 @@ export class CN_clone_base_qnaire_part extends CN_base_action {
       id: "name",
       class: "col-sm-9",
       required: true,
-      format: "module" == model_name ? "identifier" : "question_option" == model_name ? "alpha_num" : "",
+      format: "question_option" == model_name ? "alpha_num" : null,
       placeholder: `(Select a new name...)`,
       on_change: (form_input, valid) => {
         this.constructor.set_disabled(

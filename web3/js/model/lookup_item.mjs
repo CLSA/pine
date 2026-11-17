@@ -21,7 +21,7 @@ export class CN_model_lookup_item extends CN_base_model {
           is_hidden: () => "add" == this.get_action_name(),
           is_constant: () => true,
         },
-        identifier: { title: "Identifier", format: "identifier" },
+        identifier: { title: "Identifier" },
         name: { title: "Name" },
         description: { title: "Description", type: "text" },
       },
