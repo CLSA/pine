@@ -5,7 +5,6 @@ const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/input/enum.mjs`);
-const { CN_input_rank } = await import(`${CENOZO_URL}/js/input/rank.mjs`);
 const { CN_input_string } = await import(`${CENOZO_URL}/js/input/string.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 import { CN_element_qnaire_navigator } from "../element/qnaire_navigator.mjs"
@@ -254,16 +253,27 @@ export class CN_clone_base_qnaire_part extends CN_base_action {
     const rank_row_el = this.constructor.html('<div name="rank" class="row my-1"></div>');
     this.constructor.hide(rank_row_el);
     CN_element_label.append(rank_row_el, { for: "rank", value: "Rank", class: "col-sm-3" });
-    this.#rank_form_input = CN_input_rank.append(rank_row_el, {
+    this.#rank_form_input = CN_input_enum.append(rank_row_el, {
       id: "rank",
       class: "col-sm-9",
       required: true,
       placeholder: `(Select a target rank...)`,
       get_default: () => null,
-      // TODONEXT: convert to enum (rank + current name) and disable or remove current rank when moving)
-      max_rank: async () => {
-        const parent_id = this.#form_inputs[parent_model_name].get_value_for_record();
-        return parent_id ?  await CN_api.count(`${parent_model_name}/${parent_id}/${model_name}`) + 1 : 0;
+      enum: {
+        get_enums: async () => {
+          const parent_id = this.#form_inputs[parent_model_name].get_value_for_record();
+          return (
+            parent_id ?
+            (await CN_api.get(`${parent_model_name}/${parent_id}/${model_name}`, {
+              select: { column: ["rank", "name"] },
+              modifier: { order: "rank" },
+            })).map(obj => ({
+              key: obj.rank,
+              value: `${CN_common.ordinal_suffix(obj.rank)} (currently ${obj.name})`,
+            })) :
+            []
+          );
+        },
       },
       on_change: () => {
         this.constructor.set_disabled(
@@ -498,17 +508,20 @@ export class CN_view_base_qnaire_part extends CN_action_view {
       await CN_session.navigate_to(await this.#get_path(this.get_property_value("next_id")));
     });
 
-    const copy_btn_el = this.constructor.html(
-      '<button name="copy" type="button" class="btn btn-light btn-outline-primary">Move/Copy</button>'
-    );
-    left_btn_group_el.append(copy_btn_el);
-    copy_btn_el.addEventListener("click", () => {
-      const model = this.get_model();
-      const model_name = model.get_name();
-      CN_session.navigate_to(
-        model.get_view_url().replace(new RegExp(`${model_name}/view`), `${model_name}/clone`)
+    if (this.get_model().allow_edit())
+    {
+      const copy_btn_el = this.constructor.html(
+        '<button name="copy" type="button" class="btn btn-light btn-outline-primary">Move/Copy</button>'
       );
-    });
+      left_btn_group_el.append(copy_btn_el);
+      copy_btn_el.addEventListener("click", () => {
+        const model = this.get_model();
+        const model_name = model.get_name();
+        CN_session.navigate_to(
+          model.get_view_url().replace(new RegExp(`${model_name}/view`), `${model_name}/clone`)
+        );
+      });
+    }
 
     return footer_el;
   }

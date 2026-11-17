@@ -1237,23 +1237,26 @@ export class CN_view_qnaire extends CN_action_view {
       () => CN_session.navigate_to(`page/render/${this.get_property_value("first_page_id")}`),
     );
 
-    const export_btn_el = this.constructor.html(
-      '<button name="export" type="button" class="btn btn-light btn-outline-primary">Export</button>'
-    );
-    left_btn_group_el.append(export_btn_el);
-    export_btn_el.addEventListener(
-      "click",
-      () => CN_session.navigate_to(`qnaire/clone/${this.get_model().get_identifier()}`),
-    );
+    if (this.get_model().allow_edit())
+    {
+      const export_btn_el = this.constructor.html(
+        '<button name="export" type="button" class="btn btn-light btn-outline-primary">Export</button>'
+      );
+      left_btn_group_el.append(export_btn_el);
+      export_btn_el.addEventListener(
+        "click",
+        () => CN_session.navigate_to(`qnaire/clone/${this.get_model().get_identifier()}`),
+      );
 
-    const patch_btn_el = this.constructor.html(
-      '<button name="patch" type="button" class="btn btn-light btn-outline-primary">Patch</button>'
-    );
-    left_btn_group_el.append(patch_btn_el);
-    patch_btn_el.addEventListener(
-      "click",
-      () => CN_session.navigate_to(`qnaire/patch/${this.get_model().get_identifier()}`),
-    );
+      const patch_btn_el = this.constructor.html(
+        '<button name="patch" type="button" class="btn btn-light btn-outline-primary">Patch</button>'
+      );
+      left_btn_group_el.append(patch_btn_el);
+      patch_btn_el.addEventListener(
+        "click",
+        () => CN_session.navigate_to(`qnaire/patch/${this.get_model().get_identifier()}`),
+      );
+    }
 
     return footer_el;
   }
