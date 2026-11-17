@@ -6,6 +6,8 @@ SOURCE question.sql
 SOURCE question_option.sql
 SOURCE stage.sql
 
+SOURCE role_has_service.sql
+
 SOURCE update_version_number.sql
 
 COMMIT;
