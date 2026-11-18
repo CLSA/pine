@@ -62,6 +62,8 @@ export class CN_view_base_description extends CN_action_view {
    * Extend parent element
    */
   update_element() {
+    super.update_element();
+
     const model = this.get_model();
     const footer_el = this.get_footer_element();
 
