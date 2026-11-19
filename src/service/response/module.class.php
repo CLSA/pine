@@ -20,14 +20,25 @@ class module extends \cenozo\service\module
   {
     parent::prepare_read( $select, $modifier );
 
-    // add the total time spent
-    $this->add_count_column( 'time_spent',
-      'page_time',
-      $select,
-      $modifier,
-      NULL,
-      'SEC_TO_TIME( ROUND( SUM( time ) ) )'
+    // add the total time spent (we can't use add_count_column() since this is a time, not count
+    $join_sel = lib::create( 'database\select' );
+    $join_sel->from( 'response' );
+    $join_sel->add_column( 'id', 'response_id' );
+    $join_sel->add_column(
+      'IF( page_time.id IS NULL, "00:00:00", SEC_TO_TIME( ROUND( SUM( time ) ) ) )',
+      'time_spent',
+      false
     );
+    $join_mod = lib::create( 'database\modifier' );
+    $join_mod->left_join( 'page_time', 'response.id', 'page_time.response_id' );
+    $join_mod->group( 'response.id' );
+
+    $modifier->left_join(
+      sprintf( '( %s %s ) AS response_count_join_page_time', $join_sel->get_sql(), $join_mod->get_sql() ),
+      'response.id',
+      'response_count_join_page_time.response_id',
+    );
+    $select->add_table_column( 'response_count_join_page_time', 'time_spent' );
 
     $modifier->join( 'respondent', 'response.respondent_id', 'respondent.id' );
     $modifier->join( 'qnaire', 'respondent.qnaire_id', 'qnaire.id' );
