@@ -286,6 +286,26 @@ export class CN_model_qnaire extends CN_base_model {
       },
     });
   }
+
+  /**
+   * Extend parent method
+   */
+  get_child_model_list() {
+    const action = this.get_action();
+    return (
+      // interviewers only see certain lists
+      "interviewer" == CN_session.get("role", "name") ?
+      super.get_child_model_list().filter(
+        model => ["qnaire_document", "respondent"].includes(model.get_name())
+      ) :
+      // some stages are only shown when the qnaire has stages
+      "view" == action.get_type() && !action.get_property_value("stages") ?
+      super.get_child_model_list().filter(
+        model => !["deviation_type", "device", "qnaire_consent_type_confirm", "stage"].includes(model.get_name())
+      ) :
+      super.get_child_model_list()
+    );
+  }
 }
 
 export class CN_clone_qnaire extends CN_base_action {
@@ -441,7 +461,7 @@ export class CN_clone_qnaire extends CN_base_action {
 
 export class CN_list_qnaire extends CN_action_list {
   /**
-   * Extends the parent method
+   * Extend parent method
    */
   _create_footer_element() {
     const footer_el = super._create_footer_element();
@@ -1196,22 +1216,6 @@ export class CN_view_qnaire extends CN_action_view {
   /**
    * Extend parent method
    */
-  get_selector_child_list() {
-    const role = CN_session.get("role", "name");
-    const stages = this.get_property_value("stages");
-    const stages_child_list = ["deviation_type", "device", "qnaire_consent_type_confirm", "stage"];
-    const interviewer_child_list = ["qnaire_document", "respondent"];
-    return super.get_selector_child_list().filter(child =>
-      // some children should only show in qnaires with stages
-      (stages || !stages_child_list.includes(child.model.get_name())) &&
-      // interviewers only see specific children
-      ("interviewer" != role || interviewer_child_list.includes(child.model.get_name()))
-    );
-  }
-
-  /**
-   * Extend parent method
-   */
   update_element() {
     super.update_element();
 
@@ -1220,7 +1224,7 @@ export class CN_view_qnaire extends CN_action_view {
   }
 
   /**
-   * Extends the parent method
+   * Extend parent method
    */
   _create_footer_element() {
     const footer_el = super._create_footer_element();

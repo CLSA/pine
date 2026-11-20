@@ -201,7 +201,7 @@ export class CN_model_respondent extends CN_base_model {
     let response = null;
     const action = this.get_action();
     await action.wait_for(async() => {
-      const qnaire_model = this.get_model().get_parent_model();
+      const qnaire_model = this.get_parent_model();
       const path = (
         qnaire_model ? `${qnaire_model.get_view_url(null, "api")}/` : ""
       ) + `respondent${respondent_id ? `/${respondent_id}` : ""}?action=export`;
@@ -217,6 +217,27 @@ export class CN_model_respondent extends CN_base_model {
       ),
     });
     await action.run();
+  }
+
+  /**
+   * Extend parent method
+   */
+  get_child_model_list() {
+    const root_model = CN_session.get_root_model();
+    if ("qnaire" != root_model.get_name()) return super.get_child_model_list();
+
+    const qnaire_action = root_model.get_action();
+    const repeated = null != qnaire_action.get_property_value_for_record("repeated");
+    const stages = qnaire_action.get_property_value("stages");
+    const has_devices = qnaire_action.get_property_value("has_devices");
+    const sends_mail = qnaire_action.get_property_value("sends_mail");
+    return super.get_child_model_list().filter(model =>
+      ("response" == model.get_name() && repeated) ||
+      ("respondent_mail" == model.get_name() && sends_mail) ||
+      ("response_stage" == model.get_name() && !repeated && stages) ||
+      ("response_attribute" == model.get_name() && !repeated) ||
+      ("answer_device" == model.get_name() && !repeated && has_devices)
+    );
   }
 }
 
@@ -310,7 +331,7 @@ export class CN_list_respondent extends CN_action_list {
   }
 
   /**
-   * Extends the parent method
+   * Extend parent method
    */
   _create_footer_element() {
     const footer_el = super._create_footer_element();
@@ -373,17 +394,17 @@ export class CN_list_respondent extends CN_action_list {
             '<button type="button" class="btn btn-light btn-outline-primary">Import</button>'
           );
           footer_el.querySelector("div.btn-group").append(import_btn_el);
-          import_btn_el.addEventListener("click", async () => {
-            CN_session.navigate_to(qnaire_model.get_view_url(null).replace(/\/view\//, "/import_responses/"));
-          });
+          import_btn_el.addEventListener("click", () => CN_session.navigate_to(
+            qnaire_model.get_view_url(null).replace(/qnaire\/view/, "qnaire/import_responses")
+          ));
 
           const mass_btn_el = this.constructor.html(
             '<button type="button" class="btn btn-light btn-outline-primary">Mass Respondent</button>'
           );
           footer_el.querySelector("div.btn-group").append(mass_btn_el);
-          mass_btn_el.addEventListener("click", async () => {
-            CN_session.navigate_to(qnaire_model.get_view_url(null).replace(/\/view\//, "/mass_respondent/"));
-          });
+          mass_btn_el.addEventListener("click", () => CN_session.navigate_to(
+            qnaire_model.get_view_url(null).replace(/qnaire\/view/, "qnaire/mass_respondent")
+          ));
         }
       }
     }
@@ -429,24 +450,6 @@ export class CN_view_respondent extends CN_action_view {
   /**
    * Extend parent method
    */
-  get_selector_child_list() {
-    const qnaire_action = this.get_model().get_parent_model().get_action();
-    const repeated = qnaire_action.get_property_value_for_record("repeated");
-    const stages = qnaire_action.get_property_value("stages");
-    const has_devices = qnaire_action.get_property_value("has_devices");
-    const sends_mail = qnaire_action.get_property_value("sends_mail");
-    return super.get_selector_child_list().filter(child =>
-      ("response" == child.model.get_name() && null != repeated) ||
-      ("respondent_mail" == child.model.get_name() && sends_mail) ||
-      ("response_stage" == child.model.get_name() && null == repeated && stages) ||
-      ("response_attribute" == child.model.get_name() && null == repeated) ||
-      ("answer_device" == child.model.get_name() && null == repeated && has_devices)
-    );
-  }
-
-  /**
-   * Extend parent method
-   */
   update_element() {
     super.update_element();
 
@@ -455,9 +458,9 @@ export class CN_view_respondent extends CN_action_view {
     // show/hide action buttons
     const exported = "Exported" == this.get_property_value("status");
     const completed = null != this.get_property_value_for_record("end_datetime");
-    const repeated = qnaire_action.get_property_value_for_record("repeated");
-    const has_attributes = qnaire_action.get_property_value_for_record("has_attributes");
-    const language_id = null != this.get_property_value("language_id");
+    const repeated = null != qnaire_action.get_property_value_for_record("repeated");
+    const has_attributes = this.get_property_value("has_attributes");
+    const language_id = this.get_property_value("language_id");
     const stages = qnaire_action.get_property_value("stages");
     const sends_mail = qnaire_action.get_property_value("sends_mail");
     const bt = (
@@ -467,16 +470,16 @@ export class CN_view_respondent extends CN_action_view {
     if (this.#export_btn_el) this.constructor.set_hidden(this.#export_btn_el, !bt && !exported && completed);
     if (this.#reexport_btn_el) this.constructor.set_hidden(this.#reexport_btn_el, !bt && exported);
 
-    this.constructor.set_hidden(this.#display_btn_el, !repeated);
+    this.constructor.set_hidden(this.#display_btn_el, repeated);
     this.constructor.set_hidden(this.#download_report_btn_el, !this.#qnaire_reports[language_id]);
     this.constructor.set_hidden(this.#reopen_btn_el, stages || !completed);
     this.constructor.set_hidden(this.#update_attributes_btn_el, !has_attributes || completed);
     this.constructor.set_hidden(this.#launch_btn_el, !stages && completed);
-    this.constructor.set_hidden(this.#reschedule_email_btn_el, sends_mail);
+    this.constructor.set_hidden(this.#reschedule_email_btn_el, !sends_mail);
   }
 
   /**
-   * Extends the parent method
+   * Extend parent method
    */
   _create_footer_element() {
     const footer_el = super._create_footer_element();
@@ -490,7 +493,7 @@ export class CN_view_respondent extends CN_action_view {
         `);
         this.constructor.hide(this.#reexport_btn_el);
         footer_el.querySelector("div.btn-group").append(this.#reexport_btn_el);
-        this.#reexport_btn_el.addEventListener("click", () => model.reexport()); // TODO: test
+        this.#reexport_btn_el.addEventListener("click", () => model.export(model.get_identifier())); // TODO: test
       }
 
       this.#export_btn_el = this.constructor.html(
@@ -498,7 +501,7 @@ export class CN_view_respondent extends CN_action_view {
       );
       this.constructor.hide(this.#export_btn_el);
       footer_el.querySelector("div.btn-group").append(this.#export_btn_el);
-      this.#export_btn_el.addEventListener("click", () => model.export()); // TODO: test
+      this.#export_btn_el.addEventListener("click", () => model.export(model.get_identifier())); // TODO: test
     }
 
     this.#display_btn_el = this.constructor.html(
@@ -506,10 +509,9 @@ export class CN_view_respondent extends CN_action_view {
     );
     this.constructor.hide(this.#display_btn_el);
     footer_el.querySelector("div.btn-group").append(this.#display_btn_el);
-    this.#display_btn_el.addEventListener("click", () => {
-      // TODO: test
-      CN_session.navigate_to(model.get_view_url(null).replace(/\/view\//, "/display/"));
-    });
+    this.#display_btn_el.addEventListener("click", () => CN_session.navigate_to(
+      `${model.get_view_url(null)}/response/display/${this.get_property_value("current_response_id")}`
+    ));
 
     this.#download_report_btn_el = this.constructor.html(
       '<button type="button" class="btn btn-light btn-outline-primary d-none">Download Report</button>'
@@ -517,17 +519,18 @@ export class CN_view_respondent extends CN_action_view {
     this.constructor.hide(this.#download_report_btn_el);
     footer_el.querySelector("div.btn-group").append(this.#download_report_btn_el);
     this.#download_report_btn_el.addEventListener("click", async () => {
-      // TODO: test
-      const response = await CN_api.file(
-        `response/${this.get_property_value("current_response_id")}`, 
-        "application/pdf",
-        {},
-        true
-      );
-      CN_common.download_file(
-        await response.blob(),
-        response.headers.get('content-disposition').match(/filename=(.*);/)[1]
-      );
+      await this.constructor.wait_for(async () => {
+        const response = await CN_api.file(
+          `response/${this.get_property_value("current_response_id")}`,
+          "application/pdf",
+          {},
+          true
+        );
+        CN_common.download_file(
+          await response.blob(),
+          response.headers.get('content-disposition').match(/filename=(.*);/)[1]
+        );
+      });
     });
 
     this.#reopen_btn_el = this.constructor.html(
@@ -536,7 +539,7 @@ export class CN_view_respondent extends CN_action_view {
     this.constructor.hide(this.#reopen_btn_el);
     footer_el.querySelector("div.btn-group").append(this.#reopen_btn_el);
     this.#reopen_btn_el.addEventListener("click", async () => {
-      await CN_api.patch(`respondent/${this.get_model().get_identifier()}?action=reopen`, {});
+      await CN_api.patch(`respondent/${model.get_identifier()}?action=reopen`, {});
       await this.run();
     });
 
@@ -546,7 +549,6 @@ export class CN_view_respondent extends CN_action_view {
     this.constructor.hide(this.#update_attributes_btn_el);
     footer_el.querySelector("div.btn-group").append(this.#update_attributes_btn_el);
     this.#update_attributes_btn_el.addEventListener("click", async () => {
-      // TODO: test
       const response = await CN_modal_confirm.create_and_open({
         title: "Update Attributes",
         message: `
@@ -555,10 +557,10 @@ export class CN_view_respondent extends CN_action_view {
           <br\>
           This should only be done if there is a problem with the existing attributes that needs to be corrected.
         `,
-      }).show();
+      });
 
       if (response) {
-        await CN_api.patch(`${this.get_model().get_view_url(null, "api")}?action=update_attributes`, {});
+        await CN_api.patch(`respondent/${model.get_identifier()}?action=update_attributes`, {});
         await this.run(true); // reload the attribute child list as well
       }
     });
@@ -568,9 +570,10 @@ export class CN_view_respondent extends CN_action_view {
     );
     this.constructor.hide(this.#launch_btn_el);
     footer_el.querySelector("div.btn-group").append(this.#launch_btn_el);
-    this.#launch_btn_el.addEventListener("click", () => {
-      // TODO: test
-    });
+    this.#launch_btn_el.addEventListener("click", () => CN_session.navigate_to(
+      `respondent/run/${this.get_property_value("token")}`,
+      { show_hidden: 1 }
+    ));
 
     this.#reschedule_email_btn_el = this.constructor.html(
       '<button type="button" class="btn btn-light btn-outline-primary d-none">Re-Schedule Email</button>'
@@ -578,8 +581,7 @@ export class CN_view_respondent extends CN_action_view {
     this.constructor.hide(this.#reschedule_email_btn_el);
     footer_el.querySelector("div.btn-group").append(this.#reschedule_email_btn_el);
     this.#reschedule_email_btn_el.addEventListener("click", async () => {
-      // TODO: test
-      await CN_api.patch(`${this.get_model().get_view_url(null, "api")}?action=resend_mail`, {});
+      await CN_api.patch(`respondent/${model.get_identifier()}?action=resend_mail`, {});
       await this.run(true); // reload the mail child list as well
     });
 
