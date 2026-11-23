@@ -101,10 +101,19 @@ class module extends \cenozo\service\module
         );
       }
 
+      $db_first_module = $db_qnaire->get_first_module();
+      if( $select->has_column( 'first_module_id' ) )
+      {
+        $select->add_constant(
+          is_null( $db_first_module ) ? NULL : $db_first_module->id,
+          'first_module_id',
+          'integer'
+        );
+      }
+
       if( $select->has_column( 'first_page_id' ) )
       {
         $first_page_id = NULL;
-        $db_first_module = $db_qnaire->get_first_module();
         if( !is_null( $db_first_module ) )
         {
           $db_first_page = $db_first_module->get_first_page();

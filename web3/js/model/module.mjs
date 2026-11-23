@@ -5,6 +5,7 @@ import {
   CN_clone_base_qnaire_part,
   CN_view_base_qnaire_part
 } from "./base_qnaire_part.mjs";
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_model_module extends CN_model_base_qnaire_part {
   constructor() {
@@ -81,10 +82,35 @@ export class CN_model_module extends CN_model_base_qnaire_part {
           is_hidden: () => "add" == this.get_action_name(),
         },
         note: { title: "Note", type: "text" },
+        qnaire_id: { is_hidden: () => true },
+        first_page_id: { meta: {}, is_hidden: () => true },
       },
     };
   }
 }
 
 export class CN_clone_module extends CN_clone_base_qnaire_part {}
-export class CN_view_module extends CN_view_base_qnaire_part {}
+export class CN_view_module extends CN_view_base_qnaire_part {
+  /**
+   * Extends the parent method
+   */
+  _create_footer_element() {
+    const footer_el = super._create_footer_element();
+    const left_btn_group_el = footer_el.querySelector("div[name=left-btn-group]");
+
+    const preview_btn_el = this.constructor.html(
+      '<button name="preview" type="button" class="btn btn-light btn-outline-primary">Preview</button>'
+    );
+    left_btn_group_el.append(preview_btn_el);
+    preview_btn_el.addEventListener(
+      "click",
+      () => CN_session.navigate_to(
+        `qnaire/view/${this.get_property_value("qnaire_id")}/` +
+        `module/view/${this.get_model().get_identifier()}/` +
+        `page/render/${this.get_property_value("first_page_id")}`
+      ),
+    );
+
+    return footer_el;
+  }
+}

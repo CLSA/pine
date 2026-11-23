@@ -214,7 +214,6 @@ class ui3 extends \cenozo\ui\ui3
       $module->add_child( 'response_attribute' );
       $module->add_child( 'answer_device' );
       $module->add_child( 'problem_report' );
-      $module->add_action( 'display', '/{identifier}' );
     }
 
     $module = $this->get_module( 'response' );

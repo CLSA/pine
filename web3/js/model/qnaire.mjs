@@ -282,7 +282,8 @@ export class CN_model_qnaire extends CN_base_model {
         },
         has_devices: { meta: {}, type: "boolean", is_hidden: () => true },
         sends_mail: { meta: {}, type: "boolean", is_hidden: () => true },
-        first_page_id: { meta: {}, type: "boolean", is_hidden: () => true },
+        first_module_id: { meta: {}, is_hidden: () => true },
+        first_page_id: { meta: {}, is_hidden: () => true },
       },
     });
   }
@@ -1228,6 +1229,7 @@ export class CN_view_qnaire extends CN_action_view {
    */
   _create_footer_element() {
     const footer_el = super._create_footer_element();
+    const model = this.get_model();
 
     const left_btn_group_el = footer_el.querySelector("div[name=left-btn-group]");
 
@@ -1237,10 +1239,14 @@ export class CN_view_qnaire extends CN_action_view {
     left_btn_group_el.append(preview_btn_el);
     preview_btn_el.addEventListener(
       "click",
-      () => CN_session.navigate_to(`page/render/${this.get_property_value("first_page_id")}`),
+      () => CN_session.navigate_to(
+        `${model.get_view_url()}/` +
+        `module/view/${this.get_property_value("first_module_id")}/` +
+        `page/render/${this.get_property_value("first_page_id")}`
+      ),
     );
 
-    if (this.get_model().allow_edit())
+    if (model.allow_edit())
     {
       const export_btn_el = this.constructor.html(
         '<button name="export" type="button" class="btn btn-light btn-outline-primary">Export</button>'
@@ -1248,7 +1254,7 @@ export class CN_view_qnaire extends CN_action_view {
       left_btn_group_el.append(export_btn_el);
       export_btn_el.addEventListener(
         "click",
-        () => CN_session.navigate_to(`qnaire/clone/${this.get_model().get_identifier()}`),
+        () => CN_session.navigate_to(`qnaire/clone/${model.get_identifier()}`),
       );
 
       const patch_btn_el = this.constructor.html(
@@ -1257,7 +1263,7 @@ export class CN_view_qnaire extends CN_action_view {
       left_btn_group_el.append(patch_btn_el);
       patch_btn_el.addEventListener(
         "click",
-        () => CN_session.navigate_to(`qnaire/patch/${this.get_model().get_identifier()}`),
+        () => CN_session.navigate_to(`qnaire/patch/${model.get_identifier()}`),
       );
     }
 

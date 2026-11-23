@@ -487,6 +487,7 @@ export class CN_view_base_qnaire_part extends CN_action_view {
   _create_footer_element() {
     const footer_el = super._create_footer_element();
     const left_btn_group_el = footer_el.querySelector("div[name=left-btn-group]");
+    const model = this.get_model();
 
     const previous_btn_el = this.constructor.html(`
       <button name="previous" type="button" class="btn btn-light btn-outline-primary">
@@ -508,17 +509,15 @@ export class CN_view_base_qnaire_part extends CN_action_view {
       await CN_session.navigate_to(await this.#get_path(this.get_property_value("next_id")));
     });
 
-    if (this.get_model().allow_edit())
+    if (model.allow_edit())
     {
       const copy_btn_el = this.constructor.html(
         '<button name="copy" type="button" class="btn btn-light btn-outline-primary">Move/Copy</button>'
       );
       left_btn_group_el.append(copy_btn_el);
       copy_btn_el.addEventListener("click", () => {
-        const model = this.get_model();
-        const model_name = model.get_name();
         CN_session.navigate_to(
-          model.get_view_url().replace(new RegExp(`${model_name}/view`), `${model_name}/clone`)
+          model.get_view_url().replace(new RegExp(`${model.get_name()}/view`), `${model.get_name()}/clone`)
         );
       });
     }
