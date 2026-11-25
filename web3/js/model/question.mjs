@@ -63,6 +63,9 @@ export class CN_model_question extends CN_model_base_qnaire_part {
    * Extend parent method
    */
   async clone_properties() {
+    const root_model = CN_session.get_root_model();
+    if (null == root_model) return await super.clone_properties();
+
     return {
       ...await super.clone_properties(),
       ...{
@@ -93,7 +96,7 @@ export class CN_model_question extends CN_model_base_qnaire_part {
         device_id: {
           title: "Device",
           type: "enum",
-          enum: { path: `${CN_session.get_root_model().get_view_url(null, "api")}/device` },
+          enum: { path: `${root_model.get_view_url(null, "api")}/device` },
           is_hidden: () =>
             "add" == this.get_action_name() ||
             "device" != this.get_action().get_property_value("type"),

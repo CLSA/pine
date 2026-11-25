@@ -34,6 +34,8 @@ export class CN_element_qnaire_navigator extends CN_base_element {
 
     const qnaire_model = CN_session.get_root_model();
     const leaf_model = CN_session.get_leaf_model();
+    if (!qnaire_model || !leaf_model) return;
+
     const promise_list = [
       CN_api.get(qnaire_model.get_base_path("api"), {
         select: { column: [{ table: "qnaire", column: "name" }] },

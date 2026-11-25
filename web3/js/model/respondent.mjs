@@ -72,7 +72,11 @@ export class CN_model_respondent extends CN_base_model {
         qnaire_id: { is_hidden: () => true },
       },
       // sort by start datetime when showing the respondent list on the home page
-      get_default_order: () => CN_session.get_root_model() ? "uid" : { column: "start_datetime", desc: true },
+      get_default_order: () => (
+        null == CN_session.get_root_model() ?
+        "uid" :
+        { column: "start_datetime", desc: true }
+      ),
       properties: {
         participant_id: {
           meta: { table: "respondent", column: "participant_id" },
@@ -223,10 +227,9 @@ export class CN_model_respondent extends CN_base_model {
    * Extend parent method
    */
   get_child_model_list() {
-    const root_model = CN_session.get_root_model();
-    if ("qnaire" != root_model.get_name()) return super.get_child_model_list();
+    if ("qnaire" != CN_session.get_root_name()) return super.get_child_model_list();
 
-    const qnaire_action = root_model.get_action();
+    const qnaire_action = CN_session.get_root_model().get_action();
     const repeated = null != qnaire_action.get_property_value_for_record("repeated");
     const stages = qnaire_action.get_property_value("stages");
     const has_devices = qnaire_action.get_property_value("has_devices");
@@ -283,7 +286,7 @@ export class CN_list_respondent extends CN_action_list {
     const qnaire_action = qnaire_model ? qnaire_model.get_action() : null;
 
     // show/hide action buttons
-    const hide = CN_session.get_root_model() && (
+    const hide = null != CN_session.get_root_model() && (
       !qnaire_action ||
       !qnaire_action.get_property_value("parent_beartooth_url") ||
       !qnaire_action.get_property_value("parent_username")

@@ -31,11 +31,13 @@ export class CN_list_answer extends CN_action_list {
       await super.on_row_click(record);
     } else {
       const qnaire_model = CN_session.get_root_model();
-      let path = `qnaire/view/${qnaire_model.get_identifier()}/respondent/view/${record.respondent_id}`;
-      if (qnaire_model.get_action().get_property_value("repeated")) {
-        path += `/response/view/${record.response_id}`;
+      if (qnaire_model) {
+        let path = `qnaire/view/${qnaire_model.get_identifier()}/respondent/view/${record.respondent_id}`;
+        if (qnaire_model.get_action().get_property_value("repeated")) {
+          path += `/response/view/${record.response_id}`;
+        }
+        await CN_session.navigate_to(path);
       }
-      await CN_session.navigate_to(path);
     }
   }
 }

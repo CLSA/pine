@@ -24,7 +24,7 @@ export class CN_model_base_qnaire_part extends CN_base_model {
         precondition: { column: `${type}.precondition`, title: "Precondition" },
       },
       get_default_order: () => {
-        return "question" == type && "qnaire" == CN_session.get_leaf_model().get_name() ? "name" : "rank";
+        return "question" == type && "qnaire" == CN_session.get_leaf_name() ? "name" : "rank";
       },
       properties: {
         rank: { title: "Rank", type: "rank", },
@@ -529,8 +529,11 @@ export class CN_view_base_qnaire_part extends CN_action_view {
    * ADD DOCS
    */
   async #get_path(id) {
+    const root_model = CN_session.get_root_model();
+    if (!root_model) return null;
+
     const model_name = this.get_model().get_name();
-    const path_parts = [`qnaire/view/${CN_session.get_root_model().get_identifier()}`];
+    const path_parts = [`qnaire/view/${root_model.get_identifier()}`];
 
     if ("module" != model_name) {
       const columns = [{ table: "module", column: "id", alias: "module_id" }];

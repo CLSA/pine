@@ -39,9 +39,14 @@ export class CN_model_response extends CN_base_model {
         interview_type: {
           title: "Interview Type",
           is_constant: () => true,
-          is_hidden: () =>
-            "view" != this.get_action_name() ||
-            !CN_session.get_root_model().get_action().get_property_value("stages"),
+          is_hidden: () => {
+            const root_model = CN_session.get_root_model();
+            return (
+              "view" != this.get_action_name() ||
+              !root_model ||
+              !root_model.get_action().get_property_value("stages")
+            );
+          },
         },
         language_id: {
           meta: { table: "response", column: "language_id" },
@@ -71,10 +76,9 @@ export class CN_model_response extends CN_base_model {
    * Extend parent method
    */
   get_child_model_list() {
-    const root_model = CN_session.get_root_model();
-    if ("qnaire" != root_model.get_name()) return super.get_child_model_list();
+    if ("qnaire" != CN_session.get_root_name()) return super.get_child_model_list();
 
-    const qnaire_action = root_model.get_action();
+    const qnaire_action = CN_session.get_root_model().get_action();
     const stages = qnaire_action.get_property_value("stages");
     const has_devices = qnaire_action.get_property_value("has_devices");
     return super.get_child_model_list().filter(model =>

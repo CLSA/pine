@@ -13,12 +13,12 @@ export class CN_model_problem_report extends CN_base_model {
         questionnaire: {
           title: "Questionnaire",
           column: "qnaire.name",
-          is_hidden: () => "problem_report" != CN_session.get_leaf_model().get_name(),
+          is_hidden: () => "problem_report" != CN_session.get_leaf_name(),
         },
         uid: {
           title: "Participant",
           column: "participant.uid",
-          is_hidden: () => "problem_report" != CN_session.get_leaf_model().get_name(),
+          is_hidden: () => "problem_report" != CN_session.get_leaf_name(),
         },
         page_name: { title: "Page" },
         datetime: { title: "Date & Time", column: "problem_report.datetime", type: "datetime" },

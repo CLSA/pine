@@ -40,13 +40,14 @@ export class CN_model_base_qnaire_trigger extends CN_base_model {
    * Extend parent method
    */
   async clone_properties() {
+    const root_model = CN_session.get_root_model();
     const properties = await super.clone_properties();
     properties.question_id.typeahead = CN_model_question.get_typeahead({
       modifier: {
         where: [{
           column: "qnaire.id",
           operator: "=",
-          value: CN_session.get_root_model().get_identifier(),
+          value: root_model ? root_model.get_identifier() : null,
         }, {
           column: "question.type",
           operator: "!=",
